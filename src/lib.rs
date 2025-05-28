@@ -13,6 +13,7 @@ pub mod dggrs;
 pub mod factory;
 pub mod models;
 pub mod ports;
+pub mod projections;
 
 /// This is the only re-export that is needed.
 pub use factory::dggrs_factory::get;
