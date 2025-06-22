@@ -88,7 +88,7 @@ Create a new crate with `cargo new` and add this dependency in your `cargo.toml`
 ```toml
 >>>>>>> 5759c7e (fix: Resolve compilation errors and warnings after position refactor)
 [dependencies]
-geoplegma = {version = "0.2.0", path = "path/to/geoplegma"}
+dggrs = {version = "0.1.0", git = git@gitlab.com/geoinsight/dggrs.git}
 ```
 
 In your `main.rs` add the following code. In this example the DGGRID generator service is instantiated using the path to the DGGRID executable `dggrid` and a path to the work directory `/dev/shm`. 
