@@ -1,6 +1,9 @@
 use geo::geometry::Point;
 use geoplegma::dggrs;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5759c7e (fix: Resolve compilation errors and warnings after position refactor)
 fn main() {
     let configs = vec![
         // (
