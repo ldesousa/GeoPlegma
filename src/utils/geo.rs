@@ -14,14 +14,14 @@
 use geo::Point;
 use crate::{models::vector_3d::Vector3D, constants::Tolerance};
 
-/// Convert geographic point to 3D Cartesian coordinates on unit sphere
+/// Convert geographic coordinates to 3D Cartesian coordinates on unit sphere
 /// 
-/// Transforms a geographic point (longitude, latitude in degrees) to
+/// Transforms geographic coordinates (longitude, latitude in radians) to
 /// 3D Cartesian coordinates on a unit sphere. This is commonly used
 /// in spherical projections and discrete global grid systems.
 /// 
 /// # Arguments
-/// * `point` - Geographic point with longitude as x() and latitude as y()
+/// * `cartesian` - Geographic point with longitude as x() and latitude as y() in radians
 /// 
 /// # Returns
 /// Vector3D representing the point on the unit sphere
@@ -29,17 +29,17 @@ use crate::{models::vector_3d::Vector3D, constants::Tolerance};
 /// # Example
 /// ```
 /// use geo::Point;
-/// use geoplegma::utils::point_to_cartesian;
+/// use geoplegma::utils::geo_to_cartesian;
 /// 
-/// let point = Point::new(0.0, 0.0); // Equator at prime meridian
-/// let cartesian = point_to_cartesian(&point);
-/// assert!((cartesian.x - 1.0).abs() < 1e-10);
-/// assert!(cartesian.y.abs() < 1e-10);
-/// assert!(cartesian.z.abs() < 1e-10);
+/// let cartesian = Point::new(0.0, 0.0); // Equator at prime meridian (in radians)
+/// let result = geo_to_cartesian(&cartesian);
+/// assert!((result.x - 1.0).abs() < 1e-10);
+/// assert!(result.y.abs() < 1e-10);
+/// assert!(result.z.abs() < 1e-10);
 /// ```
-pub fn point_to_cartesian(point: &Point) -> Vector3D {
-    let lat_rad = point.y().to_radians();
-    let lon_rad = point.x().to_radians();
+pub fn geo_to_cartesian(cartesian: &Point) -> Vector3D {
+    let lat_rad = cartesian.y();
+    let lon_rad = cartesian.x();
     let cos_lat = lat_rad.cos();
     Vector3D {
         x: cos_lat * lon_rad.cos(),
@@ -204,17 +204,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_point_to_cartesian() {
-        // Test point at (0, 0) - should be at (1, 0, 0) on unit sphere
+    fn test_geo_to_cartesian() {
+        // Test point at (0, 0) radians - should be at (1, 0, 0) on unit sphere
         let point = Point::new(0.0, 0.0);
-        let cartesian = point_to_cartesian(&point);
+        let result = geo_to_cartesian(&point);
         
-        assert!((cartesian.x - 1.0).abs() < 1e-10);
-        assert!(cartesian.y.abs() < 1e-10);
-        assert!(cartesian.z.abs() < 1e-10);
+        assert!((result.x - 1.0).abs() < 1e-10);
+        assert!(result.y.abs() < 1e-10);
+        assert!(result.z.abs() < 1e-10);
         
         // Test that result is on unit sphere
-        assert!((cartesian.length() - 1.0).abs() < 1e-10);
+        assert!((result.length() - 1.0).abs() < 1e-10);
     }
 
     #[test]

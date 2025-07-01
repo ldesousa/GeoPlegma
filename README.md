@@ -80,13 +80,9 @@ Make sure DGGRID is compiled and available on your system. Remember the path whe
 ## Usage Example
 
 Create a new crate with `cargo new` and add this dependency in your `cargo.toml`. I expect to publish this to crates.io in the future, which will simplify this with `cargo add dggrs`.
-<<<<<<< HEAD
 
 
-````
-=======
 ```toml
->>>>>>> 5759c7e (fix: Resolve compilation errors and warnings after position refactor)
 [dependencies]
 dggrs = {version = "0.1.0", git = git@gitlab.com/geoinsight/dggrs.git}
 ```
