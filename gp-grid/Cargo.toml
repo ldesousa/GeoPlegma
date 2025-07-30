@@ -1,5 +1,5 @@
 [package]
-name = "geoplegma"
+name = "gp-grid"
 version = "0.2.0"
 license = "MIT OR Apache-2.0"
 edition = "2024"
@@ -17,6 +17,3 @@ rayon = "1.10.0"
 thiserror = "2.0.12"
 once_cell = "1.21.0"
 
-[lib]
-name = "geoplegma"
-path = "src/lib.rs"

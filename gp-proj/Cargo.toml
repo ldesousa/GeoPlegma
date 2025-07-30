@@ -1,0 +1,12 @@
+[package]
+name = "gp-proj"
+version = "0.2.0"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+readme = "README.md"
+rust-version = "1.88"
+
+[dependencies]
+geo = "0.30.0"
+thiserror = "2.0.12"
+
