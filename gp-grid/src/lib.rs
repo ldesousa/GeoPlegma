@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 pub mod adapters;
 pub mod constants;
 pub mod dggrs;

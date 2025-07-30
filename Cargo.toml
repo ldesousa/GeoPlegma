@@ -1,0 +1,11 @@
+[workspace]
+members = ["gp-grid", "gp-proj"]
+exclude = ["tests", "diagrams"]
+resolver = "3"
+
+[workspace.package]
+version = "0.2.1"
+authors = ["GeoPlegma Developers", "GeoInsight"]
+license = "MIT OR Apache-2.0"
+edition = "2024"
+readme = "README.md"
