@@ -1,4 +1,5 @@
 // Copyright 2025 contributors to the GeoPlegma project.
+//
 // Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
@@ -7,21 +8,4 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![doc = include_str!("../README.md")]
-pub mod adapters;
-pub mod constants;
-pub mod dggrs;
-pub mod error;
-pub mod factory;
-pub mod models;
-pub mod ports;
-pub mod projections;
-pub mod utils;
-pub mod types {
-    pub use crate::old::types::*;
-}
-
-mod old;
-
-/// This is the only re-export that is needed.
-pub use factory::dggrs_factory::get;
+pub mod common;
