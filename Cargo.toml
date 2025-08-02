@@ -1,6 +1,6 @@
 [workspace]
-members = ["gp-grid", "gp-proj"]
-exclude = ["tests", "diagrams"]
+members = ["dggrs", "gp-proj"]
+exclude = ["tests", "diagrams", "docs"]
 resolver = "3"
 
 [workspace.package]

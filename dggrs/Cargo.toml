@@ -1,5 +1,5 @@
 [package]
-name = "gp-grid"
+name = "dggrs"
 version = "0.2.0"
 license = "MIT OR Apache-2.0"
 edition = "2024"
