@@ -10,10 +10,7 @@
 use crate::error::dggal::DggalError;
 use crate::models::common::{Zone, ZoneID, Zones};
 use dggal_rust::dggal::{DGGRS, DGGRSZone, GeoExtent, GeoPoint};
-use geo::LineString;
-use geo::Point;
-use geo::Polygon;
-use geo::coord;
+use geo::{LineString, Point, Polygon, Rect, coord};
 
 pub fn ids_to_zones(dggrs: DGGRS, ids: Vec<DGGRSZone>) -> Result<Zones, DggalError> {
     let zones: Vec<Zone> = ids
@@ -100,19 +97,19 @@ pub fn to_geo_point(pt: Point) -> GeoPoint {
     }
 }
 
-pub fn to_geo_extent(bbox: Option<Vec<Vec<f64>>>) -> GeoExtent {
-    match bbox {
-        Some(coords) if coords.len() == 2 && coords[0].len() == 2 && coords[1].len() == 2 => {
-            let ll = GeoPoint {
-                lat: coords[0][1].to_radians(),
-                lon: coords[0][0].to_radians(),
-            };
-            let ur = GeoPoint {
-                lat: coords[1][1].to_radians(),
-                lon: coords[1][0].to_radians(),
-            };
-            GeoExtent { ll, ur }
-        }
-        _ => panic!("Invalid bounding box format"), // FIX: remove panic. bbox: Option<Vec<Vec<f64>>> has to be replaced with geo::geometry::Rect here https://docs.rs/geo/latest/geo/geometry/struct.Rect.html
+/// Convert geo::Rect BBox to DGGAL::GeoExtent
+pub fn bbox_to_geoextent(bbox: &Rect<f64>) -> GeoExtent {
+    let min = bbox.min(); // lower-left in degrees
+    let max = bbox.max(); // upper-right in degrees
+
+    GeoExtent {
+        ll: GeoPoint {
+            lat: min.y.to_radians(),
+            lon: min.x.to_radians(),
+        },
+        ur: GeoPoint {
+            lat: max.y.to_radians(),
+            lon: max.x.to_radians(),
+        },
     }
 }

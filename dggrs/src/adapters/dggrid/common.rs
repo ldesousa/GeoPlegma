@@ -10,7 +10,7 @@
 use crate::error::dggrid::DggridError;
 use crate::models::common::{Zone, ZoneID, Zones};
 use core::f64;
-use geo::geometry::{LineString, Point, Polygon};
+use geo::{LineString, Point, Polygon, Rect};
 use rand::distributions::{Alphanumeric, DistString};
 use std::fs;
 use std::fs::File;
@@ -276,16 +276,12 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-pub fn bbox_to_aigen(bbox: &Vec<Vec<f64>>, bboxfile: &PathBuf) -> io::Result<()> {
-    if bbox.len() != 2 || bbox[0].len() != 2 || bbox[1].len() != 2 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "Invalid bounding box format",
-        ));
-    }
+pub fn bbox_to_aigen(bbox: &Rect<f64>, bboxfile: &PathBuf) -> io::Result<()> {
+    let min = bbox.min();
+    let max = bbox.max();
 
-    let (minx, miny) = (bbox[0][0], bbox[0][1]);
-    let (maxx, maxy) = (bbox[1][0], bbox[1][1]);
+    let (minx, miny) = (min.x, min.y);
+    let (maxx, maxy) = (max.x, max.y);
 
     // define the 5 vertices (closing the polygon)
     let vertices = vec![

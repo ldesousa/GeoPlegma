@@ -10,13 +10,15 @@
 use crate::error::port::PortError;
 use crate::models::common::Zones;
 use geo::Point;
-// That is the port
+use geo::Rect;
+
+/// The DGGRS port trait. Each adapter can only implment the functions defined here.
 pub trait DggrsPort: Send + Sync {
     fn zones_from_bbox(
         &self,
         depth: u8,
         densify: bool,
-        bbox: Option<Vec<Vec<f64>>>,
+        bbox: Option<Rect<f64>>,
     ) -> Result<Zones, PortError>;
 
     fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError>; // NOTE:Consider accepting a vector of Points.

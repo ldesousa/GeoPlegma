@@ -9,6 +9,7 @@
 
 #![doc = include_str!("../../README.md")]
 pub mod adapters;
+pub mod constants;
 pub mod dggrs;
 pub mod error;
 pub mod factory;
