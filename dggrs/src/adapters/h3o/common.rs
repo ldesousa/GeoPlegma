@@ -14,6 +14,7 @@ use crate::{
 use geo::{Coord, CoordsIter, LineString, Point, Polygon};
 use h3o::{Boundary, CellIndex, LatLng, Resolution};
 
+/// Translates integer resolution to H3 string resolution
 pub fn res(level: u8) -> Resolution {
     Resolution::try_from(level).unwrap_or_else(|_| panic!("Invalid H3 resolution: {}", level))
 }

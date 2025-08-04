@@ -13,7 +13,7 @@ use crate::error::port::PortError;
 use crate::models::common::Zones;
 use crate::ports::dggrs::DggrsPort;
 use core::f64;
-use geo::geometry::Point;
+use geo::{Point, Rect};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
@@ -47,7 +47,7 @@ impl DggrsPort for Isea3hImpl {
         &self,
         depth: u8,
         densify: bool,
-        bbox: Option<Vec<Vec<f64>>>,
+        bbox: Option<Rect<f64>>,
     ) -> Result<Zones, PortError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);

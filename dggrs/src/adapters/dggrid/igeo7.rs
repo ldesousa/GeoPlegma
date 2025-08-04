@@ -20,6 +20,7 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use tracing::debug;
 pub const CLIP_CELL_DENSIFICATION: u8 = 50; // DGGRID option
+use geo::Rect;
 
 pub struct Igeo7Impl {
     pub adapter: DggridAdapter,
@@ -47,7 +48,7 @@ impl DggrsPort for Igeo7Impl {
         &self,
         depth: u8,
         densify: bool,
-        bbox: Option<Vec<Vec<f64>>>,
+        bbox: Option<Rect<f64>>,
     ) -> Result<Zones, PortError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);

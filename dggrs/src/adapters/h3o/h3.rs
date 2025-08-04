@@ -13,7 +13,7 @@ use crate::error::h3o::H3oError;
 use crate::error::port::PortError;
 use crate::models::common::Zones;
 use crate::ports::dggrs::DggrsPort;
-use geo::{LineString, Point, Polygon};
+use geo::{LineString, Point, Polygon, Rect};
 use h3o::geom::{ContainmentMode, TilerBuilder};
 use h3o::{CellIndex, LatLng, Resolution};
 use std::str::FromStr;
@@ -45,7 +45,7 @@ impl DggrsPort for H3Impl {
         &self,
         depth: u8,
         _densify: bool,
-        bbox: Option<Vec<Vec<f64>>>,
+        bbox: Option<Rect>,
     ) -> Result<Zones, PortError> {
         let cells: Vec<CellIndex>;
 
@@ -54,29 +54,12 @@ impl DggrsPort for H3Impl {
             .build();
 
         if let Some(b) = bbox {
-            // Validate bbox format: [[minX, minY], [maxX, maxY]]
-            if b.len() == 2 && b[0].len() == 2 && b[1].len() == 2 {
-                let (minx, miny) = (b[0][0], b[0][1]);
-                let (maxx, maxy) = (b[1][0], b[1][1]);
-
-                // Create a counter-clockwise ring (geo expects CCW)
-                let ring = LineString::from(vec![
-                    (minx, miny),
-                    (maxx, miny),
-                    (maxx, maxy),
-                    (minx, maxy),
-                    (minx, miny),
-                ]);
-
-                let polygon = Polygon::new(ring, vec![]);
-                let _ = tiler.add(polygon);
-                cells = tiler.into_coverage().collect::<Vec<_>>();
-            } else {
-                todo!("handle malformed bbox"); // TODO: Should be fixed with proper bbox
-            }
+            let _ = tiler.add(b.to_polygon());
+            cells = tiler.into_coverage().collect::<Vec<_>>();
         } else {
-            // cap res to max 10
-            let capped_res = if depth <= 10 { res(depth) } else { res(10) };
+            // cap res to max 2
+            let capped_res = if depth <= 2 { res(depth) } else { res(1) }; //FIX: This needs to be
+            //reviewed, so that the resultion is correct and not too large numbers are accepted.
 
             cells = CellIndex::base_cells()
                 .flat_map(|base| base.children(capped_res))

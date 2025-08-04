@@ -7,17 +7,15 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::adapters::dggal::common::{ids_to_zones, to_geo_extent, to_geo_point};
+use crate::adapters::dggal::common::{bbox_to_geoextent, ids_to_zones, to_geo_point};
+use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
 use crate::error::port::PortError;
 use crate::models::common::Zones;
 use crate::ports::dggrs::DggrsPort;
-use dggal::{DGGAL, DGGRS};
+use dggal::DGGRS;
 use dggal_rust::dggal;
-use dggal_rust::ecrt;
-use ecrt::Application;
-use geo::Point;
-use std::env;
+use geo::{Point, Rect};
 
 // fn get_dggrs(grid_name: &str) -> Result<DGGRS, DggalError> {
 //     let args: Vec<String> = env::args().collect();
@@ -54,7 +52,7 @@ impl DggrsPort for DggalImpl {
         &self,
         depth: u8,
         densify: bool,
-        bbox: Option<Vec<Vec<f64>>>,
+        bbox: Option<Rect>,
     ) -> Result<Zones, PortError> {
         let dggrs = get_dggrs(&self.grid_name)?;
 
@@ -65,15 +63,13 @@ impl DggrsPort for DggalImpl {
             depth as i32
         };
 
-        let zones = if let Some(b) = bbox {
-            dggrs.listZones(capped_depth, &to_geo_extent(Some(b)))
+        let geo_extent = if let Some(b) = bbox {
+            bbox_to_geoextent(&b)
         } else {
-            dggrs.listZones(
-                capped_depth,
-                &to_geo_extent(Some(vec![vec![-90.0, -180.0], vec![90.0, 180.0]])), // FIX: Use the geo Rect struct
-            )
+            bbox_to_geoextent(&whole_earth_bbox())
         };
 
+        let zones = dggrs.listZones(capped_depth, &geo_extent);
         Ok(ids_to_zones(dggrs, zones)?)
     }
     fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError> {
