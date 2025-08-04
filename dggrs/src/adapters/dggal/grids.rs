@@ -52,7 +52,7 @@ impl DggrsPort for DggalImpl {
         &self,
         depth: u8,
         densify: bool,
-        bbox: Option<Rect>,
+        bbox: Option<Rect<f64>>,
     ) -> Result<Zones, PortError> {
         let dggrs = get_dggrs(&self.grid_name)?;
 

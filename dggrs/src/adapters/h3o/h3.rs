@@ -45,7 +45,7 @@ impl DggrsPort for H3Impl {
         &self,
         depth: u8,
         _densify: bool,
-        bbox: Option<Rect>,
+        bbox: Option<Rect<f64>>,
     ) -> Result<Zones, PortError> {
         let cells: Vec<CellIndex>;
 
