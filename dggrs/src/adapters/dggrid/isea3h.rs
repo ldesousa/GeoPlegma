@@ -259,6 +259,21 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
+    fn min_depth(&self) -> u8 {
+        0
+    }
+
+    fn max_depth(&self) -> u8 {
+        32
+    }
+
+    fn default_depth(&self) -> u8 {
+        4
+    }
+
+    fn max_relative_depth(&self) -> u8 {
+        8
+    }
 }
 
 pub fn isea3h_metafile(meta_path: &PathBuf) -> io::Result<()> {

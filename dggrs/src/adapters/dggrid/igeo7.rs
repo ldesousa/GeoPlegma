@@ -260,6 +260,22 @@ impl DggrsPort for Igeo7Impl {
         );
         Ok(result)
     }
+
+    fn min_depth(&self) -> u8 {
+        0
+    }
+
+    fn max_depth(&self) -> u8 {
+        18
+    }
+
+    fn default_depth(&self) -> u8 {
+        2
+    }
+
+    fn max_relative_depth(&self) -> u8 {
+        3
+    }
 }
 
 pub fn igeo7_metafile(meta_path: &PathBuf) -> io::Result<()> {

@@ -77,7 +77,7 @@ impl DggrsPort for H3Impl {
     }
     fn zones_from_parent(
         &self,
-        depth: u8,
+        relative_depth: u8,
         zone_id: String, // ToDo: needs validation function
         _densify: bool,
     ) -> Result<Zones, PortError> {
@@ -88,13 +88,13 @@ impl DggrsPort for H3Impl {
             })
         })?;
 
-        let base_res = parent.resolution();
-        let next = u8::from(base_res) + depth;
+        let parent_res = parent.resolution();
+        let next = u8::from(parent_res) + relative_depth;
 
         let target_res = Resolution::try_from(next).map_err(|e| {
-            PortError::H3o(H3oError::InvalidResolution {
+            PortError::H3o(H3oError::MaxDepthReached {
                 zone_id: zone_id.clone(),
-                depth,
+                depth: next,
                 source: e,
             })
         })?;
@@ -116,5 +116,21 @@ impl DggrsPort for H3Impl {
         })?;
 
         Ok(cells_to_zones(vec![cell])?)
+    }
+
+    fn min_depth(&self) -> u8 {
+        0
+    }
+
+    fn max_depth(&self) -> u8 {
+        15
+    }
+
+    fn default_depth(&self) -> u8 {
+        1
+    }
+
+    fn max_relative_depth(&self) -> u8 {
+        2
     }
 }

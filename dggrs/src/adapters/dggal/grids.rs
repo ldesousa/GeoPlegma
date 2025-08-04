@@ -105,4 +105,20 @@ impl DggrsPort for DggalImpl {
 
         Ok(ids_to_zones(dggrs, zones)?)
     }
+
+    fn min_depth(&self) -> u8 {
+        unimplemented!()
+    }
+
+    fn max_depth(&self) -> u8 {
+        unimplemented!()
+    }
+
+    fn default_depth(&self) -> u8 {
+        unimplemented!()
+    }
+
+    fn max_relative_depth(&self) -> u8 {
+        unimplemented!()
+    }
 }

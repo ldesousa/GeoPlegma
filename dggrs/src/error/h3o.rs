@@ -23,7 +23,7 @@ pub enum H3oError {
     },
 
     #[error("Depth {depth} for {zone_id} is to high: {source}")]
-    InvalidResolution {
+    MaxDepthReached {
         zone_id: String,
         depth: u8,
         #[source]
