@@ -9,8 +9,8 @@
 
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
-use crate::error::port::PortError;
-use crate::models::common::Zones;
+use crate::error::port::GeoPlegmaError;
+use crate::models::common::{Depth, RelativeDepth, Zones};
 use crate::ports::dggrs::DggrsPort;
 use core::f64;
 use geo::{Point, Rect};
@@ -45,16 +45,16 @@ impl Default for Isea3hImpl {
 impl DggrsPort for Isea3hImpl {
     fn zones_from_bbox(
         &self,
-        depth: u8,
+        depth: Depth,
         densify: bool,
         bbox: Option<Rect<f64>>,
-    ) -> Result<Zones, PortError> {
+    ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &depth,
+            &u8::try_from(depth)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -83,7 +83,12 @@ impl DggrsPort for Isea3hImpl {
 
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path, &depth)?;
+        let result = common::dggrid_parse(
+            &aigen_path,
+            &children_path,
+            &neighbor_path,
+            &u8::try_from(depth)?,
+        )?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -94,13 +99,18 @@ impl DggrsPort for Isea3hImpl {
         Ok(result)
     }
 
-    fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError> {
+    fn zone_from_point(
+        &self,
+        depth: Depth,
+        point: Point,
+        densify: bool,
+    ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &depth,
+            &u8::try_from(depth)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -136,7 +146,12 @@ impl DggrsPort for Isea3hImpl {
 
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path, &depth)?;
+        let result = common::dggrid_parse(
+            &aigen_path,
+            &children_path,
+            &neighbor_path,
+            &u8::try_from(depth)?,
+        )?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -149,17 +164,17 @@ impl DggrsPort for Isea3hImpl {
     }
     fn zones_from_parent(
         &self,
-        depth: u8,
+        depth: RelativeDepth,
         parent_zone_id: String, // ToDo: needs validation function
         // clip_cell_res: u8,
         densify: bool,
-    ) -> Result<Zones, PortError> {
+    ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &depth,
+            &u8::try_from(depth)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -190,7 +205,12 @@ impl DggrsPort for Isea3hImpl {
         let _ = writeln!(meta_file, "input_address_type Z3");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path, &depth)?;
+        let result = common::dggrid_parse(
+            &aigen_path,
+            &children_path,
+            &neighbor_path,
+            &u8::try_from(depth)?,
+        )?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -204,7 +224,7 @@ impl DggrsPort for Isea3hImpl {
         &self,
         zone_id: String, // ToDo: needs validation function
         densify: bool,
-    ) -> Result<Zones, PortError> {
+    ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -259,20 +279,20 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
-    fn min_depth(&self) -> u8 {
-        0
+    fn min_depth(&self) -> Result<Depth, GeoPlegmaError> {
+        Ok(Depth::new(0)?)
     }
 
-    fn max_depth(&self) -> u8 {
-        32
+    fn max_depth(&self) -> Result<Depth, GeoPlegmaError> {
+        Ok(Depth::new(32)?)
     }
 
-    fn default_depth(&self) -> u8 {
-        4
+    fn default_depth(&self) -> Result<Depth, GeoPlegmaError> {
+        Ok(Depth::new(4)?)
     }
 
-    fn max_relative_depth(&self) -> u8 {
-        8
+    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+        Ok(RelativeDepth::new(8)?)
     }
 }
 

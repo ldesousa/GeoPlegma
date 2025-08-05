@@ -10,10 +10,11 @@
 use crate::error::dggal::DggalError;
 use crate::error::dggrid::DggridError;
 use crate::error::h3o::H3oError;
+use crate::models::common::{Depth, RelativeDepth};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum PortError {
+pub enum GeoPlegmaError {
     #[error("DGGAL error: {0}")]
     Dggal(#[from] DggalError),
 
@@ -23,6 +24,34 @@ pub enum PortError {
     #[error("H3o error: {0}")]
     H3o(#[from] H3oError),
 
+    #[error("Depth must be non-negative, got {0}")]
+    DepthBelowZero(i32),
+
+    #[error("Relative depth must be non-negative, got {0}")]
+    RelativeDepthBelowZero(i32),
+
     #[error("Unsupported tool/grid combination: {tool}, {grid}")]
     UnsupportedCombo { tool: String, grid: String },
+
+    #[error("Requested depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'")]
+    DepthLimitReached {
+        grid_name: String,
+        requested: Depth,
+        maximum: Depth,
+    },
+
+    #[error(
+        "Requested relative depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'"
+    )]
+    RelativeDepthLimitReached {
+        grid_name: String,
+        requested: RelativeDepth,
+        maximum: Depth,
+    },
+
+    #[error("Depth too large to convert to u8: {0}")]
+    DepthTooLarge(Depth),
+
+    #[error("Relative depth too large to convert to u8: {0}")]
+    RelativeDepthTooLarge(RelativeDepth),
 }

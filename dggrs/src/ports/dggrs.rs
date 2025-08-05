@@ -7,8 +7,8 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::error::port::PortError;
-use crate::models::common::Zones;
+use crate::error::port::GeoPlegmaError;
+use crate::models::common::{Depth, RelativeDepth, Zones};
 use geo::Point;
 use geo::Rect;
 
@@ -17,34 +17,39 @@ pub trait DggrsPort: Send + Sync {
     /// Get zones for geo::Rect bounding box. If no bbox is supplied the whole world is taken.
     fn zones_from_bbox(
         &self,
-        depth: u8,
+        depth: Depth,
         densify: bool,
         bbox: Option<Rect<f64>>,
-    ) -> Result<Zones, PortError>;
+    ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get zones for a geo::Point.
-    fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError>; // NOTE:Consider accepting a vector of Points.
+    fn zone_from_point(
+        &self,
+        depth: Depth,
+        point: Point,
+        densify: bool,
+    ) -> Result<Zones, GeoPlegmaError>; // NOTE:Consider accepting a vector of Points.
 
     /// Get zones based on a parent ZoneID.
     fn zones_from_parent(
         &self,
-        relative_depth: u8,     // FIX: This needs to be relative depth!
+        relative_depth: RelativeDepth, // FIX: This needs to be relative depth!
         parent_zone_id: String, // FIX: This needs to be ZoneID (so integer or string), see relevant enum.
         densify: bool,
-    ) -> Result<Zones, PortError>;
+    ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get a zone based on a ZoneID
-    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, PortError>; // NOTE: Consider accepting a vector of ZoneIDs
+    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
 
     /// Get the minimum depth of a DGGRS
-    fn min_depth(&self) -> u8;
+    fn min_depth(&self) -> Result<Depth, GeoPlegmaError>;
 
     /// Get the maximum depth of a DGGRS
-    fn max_depth(&self) -> u8;
+    fn max_depth(&self) -> Result<Depth, GeoPlegmaError>;
 
     /// Get the default depth of a DGGRS
-    fn default_depth(&self) -> u8;
+    fn default_depth(&self) -> Result<Depth, GeoPlegmaError>;
 
     /// Get the  max relative depth of a DGGRS
-    fn max_relative_depth(&self) -> u8;
+    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError>;
 }

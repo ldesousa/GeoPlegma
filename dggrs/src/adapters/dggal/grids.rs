@@ -10,8 +10,8 @@
 use crate::adapters::dggal::common::{bbox_to_geoextent, ids_to_zones, to_geo_point};
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
-use crate::error::port::PortError;
-use crate::models::common::Zones;
+use crate::error::port::GeoPlegmaError;
+use crate::models::common::{Depth, RelativeDepth, Zones};
 use crate::ports::dggrs::DggrsPort;
 use dggal::DGGRS;
 use dggal_rust::dggal;
@@ -50,17 +50,16 @@ fn get_dggrs(grid_name: &str) -> Result<DGGRS, DggalError> {
 impl DggrsPort for DggalImpl {
     fn zones_from_bbox(
         &self,
-        depth: u8,
+        depth: Depth,
         densify: bool,
         bbox: Option<Rect<f64>>,
-    ) -> Result<Zones, PortError> {
-        let dggrs = get_dggrs(&self.grid_name)?;
-
-        let max_depth = dggrs.getMaxDepth();
-        let capped_depth = if depth as i32 > max_depth {
-            max_depth
-        } else {
-            depth as i32
+    ) -> Result<Zones, GeoPlegmaError> {
+        if depth > self.max_depth()? {
+            return Err(GeoPlegmaError::DepthLimitReached {
+                grid_name: self.grid_name.clone(),
+                requested: depth,
+                maximum: self.max_depth()?,
+            });
         };
 
         let geo_extent = if let Some(b) = bbox {
@@ -69,36 +68,52 @@ impl DggrsPort for DggalImpl {
             bbox_to_geoextent(&whole_earth_bbox())
         };
 
-        let zones = dggrs.listZones(capped_depth, &geo_extent);
+        let dggrs = get_dggrs(&self.grid_name)?;
+
+        let zones = dggrs.listZones(i32::from(depth), &geo_extent);
         Ok(ids_to_zones(dggrs, zones)?)
     }
-    fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError> {
+    fn zone_from_point(
+        &self,
+        depth: Depth,
+        point: Point,
+        densify: bool,
+    ) -> Result<Zones, GeoPlegmaError> {
         let dggrs = get_dggrs(&self.grid_name)?;
-        let zone = dggrs.getZoneFromWGS84Centroid(depth as i32, &to_geo_point(point));
+        let zone = dggrs.getZoneFromWGS84Centroid(i32::from(depth), &to_geo_point(point));
         let zones = vec![zone];
         Ok(ids_to_zones(dggrs, zones)?)
     }
     fn zones_from_parent(
         &self,
-        depth: u8,
+        relative_depth: RelativeDepth,
         parent_zone_id: String,
         densify: bool,
-    ) -> Result<Zones, PortError> {
-        let dggrs = get_dggrs(&self.grid_name)?;
-        let max_depth = dggrs.getMaxDepth();
+    ) -> Result<Zones, GeoPlegmaError> {
+        if relative_depth > self.max_relative_depth()? {
+            return Err(GeoPlegmaError::RelativeDepthLimitReached {
+                grid_name: self.grid_name.clone(),
+                requested: relative_depth,
+                maximum: self.max_depth()?,
+            });
+        };
+        let parent = parent_zone_id.parse::<u64>().expect("Invalid u64 string");
 
-        let capped_depth = if depth as i32 > max_depth {
-            max_depth
-        } else {
-            depth as i32
+        let dggrs = get_dggrs(&self.grid_name)?;
+        let target_depth = Depth::try_from(dggrs.getZoneLevel(parent) + i32::from(relative_depth))?; //FIX: probably better to implement Add for Depth
+        if target_depth > self.max_depth()? {
+            return Err(GeoPlegmaError::RelativeDepthLimitReached {
+                grid_name: self.grid_name.clone(),
+                requested: relative_depth,
+                maximum: self.max_depth()?,
+            });
         };
 
-        let num: u64 = parent_zone_id.parse::<u64>().expect("Invalid u64 string"); // FIX: parent_zone_id needs to be the ZoneID enum not String
-        let zones = dggrs.getSubZones(num, capped_depth);
+        let zones = dggrs.getSubZones(parent, i32::from(relative_depth));
 
         Ok(ids_to_zones(dggrs, zones)?)
     }
-    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, PortError> {
+    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, GeoPlegmaError> {
         let dggrs = get_dggrs(&self.grid_name)?;
         let num: u64 = zone_id.parse::<u64>().expect("Invalid u64 string"); // FIX: parent_zone_id needs to be the ZoneID enum not String
         let zones = vec![num];
@@ -106,19 +121,25 @@ impl DggrsPort for DggalImpl {
         Ok(ids_to_zones(dggrs, zones)?)
     }
 
-    fn min_depth(&self) -> u8 {
+    fn min_depth(&self) -> Result<Depth, GeoPlegmaError> {
+        Ok(Depth::new(0)?)
+    }
+
+    fn max_depth(&self) -> Result<Depth, GeoPlegmaError> {
+        let dggrs = get_dggrs(&self.grid_name).map_err(|_| DggalError::UnknownGrid {
+            grid_name: self.grid_name.clone(),
+        })?;
+
+        let d = dggrs.getMaxDepth();
+
+        Ok(Depth::new(d)?)
+    }
+
+    fn default_depth(&self) -> Result<Depth, GeoPlegmaError> {
         unimplemented!()
     }
 
-    fn max_depth(&self) -> u8 {
-        unimplemented!()
-    }
-
-    fn default_depth(&self) -> u8 {
-        unimplemented!()
-    }
-
-    fn max_relative_depth(&self) -> u8 {
+    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         unimplemented!()
     }
 }
