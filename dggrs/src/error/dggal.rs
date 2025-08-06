@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::models::common::{Depth, RelativeDepth};
+use crate::models::common::{RefinementLevel, RelativeDepth};
 use std::num::TryFromIntError;
 use thiserror::Error;
 

@@ -86,9 +86,9 @@ impl fmt::Display for ZoneID {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Depth(i32);
+pub struct RefinementLevel(i32);
 
-impl Depth {
+impl RefinementLevel {
     pub fn new(value: i32) -> Result<Self, GeoPlegmaError> {
         if value < 0 {
             Err(GeoPlegmaError::DepthBelowZero(value))
@@ -103,39 +103,46 @@ impl Depth {
 }
 
 // i32 → Depth (fallible)
-impl TryFrom<i32> for Depth {
+impl TryFrom<i32> for RefinementLevel {
     type Error = GeoPlegmaError;
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
-        Depth::new(value)
+        RefinementLevel::new(value)
     }
 }
 
 // u8 → Depth (infallible)
-impl From<u8> for Depth {
+impl From<u8> for RefinementLevel {
     fn from(value: u8) -> Self {
         Self(value as i32)
     }
 }
 
+// u32 → Depth (infallible)
+impl From<u32> for RefinementLevel {
+    fn from(value: u32) -> Self {
+        Self(value as i32)
+    }
+}
+
 // Depth → i32
-impl From<Depth> for i32 {
-    fn from(d: Depth) -> Self {
+impl From<RefinementLevel> for i32 {
+    fn from(d: RefinementLevel) -> Self {
         d.0
     }
 }
 
 // Depth → u8 (fallible)
-impl TryFrom<Depth> for u8 {
+impl TryFrom<RefinementLevel> for u8 {
     type Error = GeoPlegmaError;
 
-    fn try_from(d: Depth) -> Result<Self, Self::Error> {
+    fn try_from(d: RefinementLevel) -> Result<Self, Self::Error> {
         u8::try_from(d.0).map_err(|_| GeoPlegmaError::DepthTooLarge(d))
     }
 }
 
 // Display for Depth
-impl fmt::Display for Depth {
+impl fmt::Display for RefinementLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -170,6 +177,13 @@ impl TryFrom<i32> for RelativeDepth {
 // u8 → RelativeDepth (infallible)
 impl From<u8> for RelativeDepth {
     fn from(value: u8) -> Self {
+        Self(value as i32)
+    }
+}
+
+// u32 → RelativeDepth (infallible)
+impl From<u32> for RelativeDepth {
+    fn from(value: u32) -> Self {
         Self(value as i32)
     }
 }

@@ -11,7 +11,7 @@ use crate::adapters::h3o::common::{cells_to_zones, res};
 use crate::adapters::h3o::h3o::H3oAdapter;
 use crate::error::h3o::H3oError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{Depth, RelativeDepth, Zones};
+use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
 use crate::ports::dggrs::DggrsPort;
 use geo::{Point, Rect};
 use h3o::geom::{ContainmentMode, TilerBuilder};
@@ -43,7 +43,7 @@ impl Default for H3Impl {
 impl DggrsPort for H3Impl {
     fn zones_from_bbox(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         _densify: bool,
         bbox: Option<Rect<f64>>,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -58,7 +58,7 @@ impl DggrsPort for H3Impl {
             let _ = tiler.add(b.to_polygon());
             cells = tiler.into_coverage().collect::<Vec<_>>();
         } else {
-            if depth > self.default_depth()? {
+            if depth > self.default_refinement_level()? {
                 return Err(GeoPlegmaError::DepthTooLarge(depth));
             }
             let r = u8::try_from(depth)?;
@@ -70,7 +70,7 @@ impl DggrsPort for H3Impl {
     }
     fn zone_from_point(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         point: Point,
         _densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -123,19 +123,23 @@ impl DggrsPort for H3Impl {
         Ok(cells_to_zones(vec![cell])?)
     }
 
-    fn min_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(0)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
+    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(0)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
     }
 
-    fn max_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(15)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
+    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(15)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
     }
 
-    fn default_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(1)?)
+    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(1)?)
     }
 
     fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         Ok(RelativeDepth::new(2)?)
+    }
+
+    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+        Ok(RelativeDepth::new(1)?)
     }
 }

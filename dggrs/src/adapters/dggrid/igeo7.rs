@@ -10,7 +10,7 @@
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{Depth, RelativeDepth, Zones};
+use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
 use crate::ports::dggrs::DggrsPort;
 use core::f64;
 use geo::geometry::Point;
@@ -46,7 +46,7 @@ impl Default for Igeo7Impl {
 impl DggrsPort for Igeo7Impl {
     fn zones_from_bbox(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         densify: bool,
         bbox: Option<Rect<f64>>,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -102,7 +102,7 @@ impl DggrsPort for Igeo7Impl {
 
     fn zone_from_point(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         point: Point,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -281,20 +281,24 @@ impl DggrsPort for Igeo7Impl {
         Ok(result)
     }
 
-    fn min_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(0)?)
+    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(0)?)
     }
 
-    fn max_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(18)?)
+    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(18)?)
     }
 
-    fn default_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(2)?)
+    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(2)?)
     }
 
     fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         Ok(RelativeDepth::new(3)?)
+    }
+
+    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+        Ok(RelativeDepth::new(1)?)
     }
 }
 

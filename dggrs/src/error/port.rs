@@ -10,7 +10,7 @@
 use crate::error::dggal::DggalError;
 use crate::error::dggrid::DggridError;
 use crate::error::h3o::H3oError;
-use crate::models::common::{Depth, RelativeDepth};
+use crate::models::common::{RefinementLevel, RelativeDepth};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -36,8 +36,8 @@ pub enum GeoPlegmaError {
     #[error("Requested depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'")]
     DepthLimitReached {
         grid_name: String,
-        requested: Depth,
-        maximum: Depth,
+        requested: RefinementLevel,
+        maximum: RefinementLevel,
     },
 
     #[error(
@@ -46,11 +46,11 @@ pub enum GeoPlegmaError {
     RelativeDepthLimitReached {
         grid_name: String,
         requested: RelativeDepth,
-        maximum: Depth,
+        maximum: RefinementLevel,
     },
 
     #[error("Depth too large to convert to u8: {0}")]
-    DepthTooLarge(Depth),
+    DepthTooLarge(RefinementLevel),
 
     #[error("Relative depth too large to convert to u8: {0}")]
     RelativeDepthTooLarge(RelativeDepth),

@@ -11,7 +11,7 @@ use crate::adapters::dggal::common::{bbox_to_geoextent, ids_to_zones, to_geo_poi
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{Depth, RelativeDepth, Zones};
+use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
 use crate::ports::dggrs::DggrsPort;
 use dggal::DGGRS;
 use dggal_rust::dggal;
@@ -50,15 +50,15 @@ fn get_dggrs(grid_name: &str) -> Result<DGGRS, DggalError> {
 impl DggrsPort for DggalImpl {
     fn zones_from_bbox(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         densify: bool,
         bbox: Option<Rect<f64>>,
     ) -> Result<Zones, GeoPlegmaError> {
-        if depth > self.max_depth()? {
+        if depth > self.max_refinement_level()? {
             return Err(GeoPlegmaError::DepthLimitReached {
                 grid_name: self.grid_name.clone(),
                 requested: depth,
-                maximum: self.max_depth()?,
+                maximum: self.max_refinement_level()?,
             });
         };
 
@@ -75,7 +75,7 @@ impl DggrsPort for DggalImpl {
     }
     fn zone_from_point(
         &self,
-        depth: Depth,
+        depth: RefinementLevel,
         point: Point,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -94,18 +94,19 @@ impl DggrsPort for DggalImpl {
             return Err(GeoPlegmaError::RelativeDepthLimitReached {
                 grid_name: self.grid_name.clone(),
                 requested: relative_depth,
-                maximum: self.max_depth()?,
+                maximum: self.max_refinement_level()?,
             });
         };
         let parent = parent_zone_id.parse::<u64>().expect("Invalid u64 string");
 
         let dggrs = get_dggrs(&self.grid_name)?;
-        let target_depth = Depth::try_from(dggrs.getZoneLevel(parent) + i32::from(relative_depth))?; //FIX: probably better to implement Add for Depth
-        if target_depth > self.max_depth()? {
+        let target_depth =
+            RefinementLevel::try_from(dggrs.getZoneLevel(parent) + i32::from(relative_depth))?; //FIX: probably better to implement Add for Depth
+        if target_depth > self.max_refinement_level()? {
             return Err(GeoPlegmaError::RelativeDepthLimitReached {
                 grid_name: self.grid_name.clone(),
                 requested: relative_depth,
-                maximum: self.max_depth()?,
+                maximum: self.max_refinement_level()?,
             });
         };
 
@@ -121,25 +122,29 @@ impl DggrsPort for DggalImpl {
         Ok(ids_to_zones(dggrs, zones)?)
     }
 
-    fn min_depth(&self) -> Result<Depth, GeoPlegmaError> {
-        Ok(Depth::new(0)?)
+    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+        Ok(RefinementLevel::new(0)?)
     }
 
-    fn max_depth(&self) -> Result<Depth, GeoPlegmaError> {
+    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
         let dggrs = get_dggrs(&self.grid_name).map_err(|_| DggalError::UnknownGrid {
             grid_name: self.grid_name.clone(),
         })?;
 
         let d = dggrs.getMaxDepth();
 
-        Ok(Depth::new(d)?)
+        Ok(RefinementLevel::new(d)?)
     }
 
-    fn default_depth(&self) -> Result<Depth, GeoPlegmaError> {
+    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
         unimplemented!()
     }
 
     fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+        unimplemented!()
+    }
+
+    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         unimplemented!()
     }
 }
