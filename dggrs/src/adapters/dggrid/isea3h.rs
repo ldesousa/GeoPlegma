@@ -194,7 +194,7 @@ impl DggrsPort for Isea3hImpl {
 
         let clip_cell_address = &parent_zone_id[2..]; // strip first two characters. ToDo: can we get the res from the index itself?
 
-        let _ = writeln!(meta_file, "clip_subset_type zones_from_parent");
+        let _ = writeln!(meta_file, "clip_subset_type COARSE_CELLS");
         let _ = writeln!(meta_file, "clip_cell_res {:?}", clip_cell_res);
         let _ = writeln!(
             meta_file,

@@ -137,14 +137,14 @@ impl DggrsPort for DggalImpl {
     }
 
     fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        unimplemented!()
+        Ok(RefinementLevel::new(2)?)
     }
 
     fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        unimplemented!()
+        Ok(RelativeDepth::new(4)?)
     }
 
     fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        unimplemented!()
+        Ok(RelativeDepth::new(2)?)
     }
 }
