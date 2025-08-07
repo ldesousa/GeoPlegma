@@ -6,8 +6,9 @@
 // <LICENCE-MIT or http://opensource.org/licenses/MIT>, at your
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
-
+use crate::error::port::GeoPlegmaError;
 use geo::{Point, Polygon};
+use std::convert::{From, TryFrom};
 use std::fmt;
 
 #[derive(Debug)]
@@ -81,5 +82,131 @@ impl fmt::Display for ZoneID {
             ZoneID::StrID(s) => write!(f, "{s}"),
             ZoneID::IntID(i) => write!(f, "{i}"),
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct RefinementLevel(i32);
+
+impl RefinementLevel {
+    pub fn new(value: i32) -> Result<Self, GeoPlegmaError> {
+        if value < 0 {
+            Err(GeoPlegmaError::DepthBelowZero(value))
+        } else {
+            Ok(Self(value))
+        }
+    }
+
+    pub fn get(self) -> i32 {
+        self.0
+    }
+}
+
+// i32 → Depth (fallible)
+impl TryFrom<i32> for RefinementLevel {
+    type Error = GeoPlegmaError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        RefinementLevel::new(value)
+    }
+}
+
+// u8 → Depth (infallible)
+impl From<u8> for RefinementLevel {
+    fn from(value: u8) -> Self {
+        Self(value as i32)
+    }
+}
+
+// u32 → Depth (infallible)
+impl From<u32> for RefinementLevel {
+    fn from(value: u32) -> Self {
+        Self(value as i32)
+    }
+}
+
+// Depth → i32
+impl From<RefinementLevel> for i32 {
+    fn from(d: RefinementLevel) -> Self {
+        d.0
+    }
+}
+
+// Depth → u8 (fallible)
+impl TryFrom<RefinementLevel> for u8 {
+    type Error = GeoPlegmaError;
+
+    fn try_from(d: RefinementLevel) -> Result<Self, Self::Error> {
+        u8::try_from(d.0).map_err(|_| GeoPlegmaError::DepthTooLarge(d))
+    }
+}
+
+// Display for Depth
+impl fmt::Display for RefinementLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct RelativeDepth(i32);
+
+impl RelativeDepth {
+    pub fn new(value: i32) -> Result<Self, GeoPlegmaError> {
+        if value < 0 {
+            Err(GeoPlegmaError::RelativeDepthBelowZero(value))
+        } else {
+            Ok(Self(value))
+        }
+    }
+
+    pub fn get(self) -> i32 {
+        self.0
+    }
+}
+
+// i32 → RelativeDepth (fallible)
+impl TryFrom<i32> for RelativeDepth {
+    type Error = GeoPlegmaError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        RelativeDepth::new(value)
+    }
+}
+
+// u8 → RelativeDepth (infallible)
+impl From<u8> for RelativeDepth {
+    fn from(value: u8) -> Self {
+        Self(value as i32)
+    }
+}
+
+// u32 → RelativeDepth (infallible)
+impl From<u32> for RelativeDepth {
+    fn from(value: u32) -> Self {
+        Self(value as i32)
+    }
+}
+
+// RelativeDepth → i32
+impl From<RelativeDepth> for i32 {
+    fn from(rd: RelativeDepth) -> Self {
+        rd.0
+    }
+}
+
+// RelativeDepth → u8 (fallible)
+impl TryFrom<RelativeDepth> for u8 {
+    type Error = GeoPlegmaError;
+
+    fn try_from(rd: RelativeDepth) -> Result<Self, Self::Error> {
+        u8::try_from(rd.0).map_err(|_| GeoPlegmaError::RelativeDepthTooLarge(rd))
+    }
+}
+
+// Display for RelativeDepth
+impl fmt::Display for RelativeDepth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

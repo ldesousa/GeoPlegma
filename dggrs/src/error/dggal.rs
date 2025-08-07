@@ -7,6 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::models::common::{RefinementLevel, RelativeDepth};
 use std::num::TryFromIntError;
 use thiserror::Error;
 
@@ -31,4 +32,11 @@ pub enum DggalError {
 
     #[error("Failed to acquire global lock")]
     LockFailure,
+
+    #[error("Failed to convert max depth to u8 for grid '{grid_name}': {source}")]
+    DepthConversion {
+        grid_name: String,
+        #[source]
+        source: TryFromIntError,
+    },
 }

@@ -16,7 +16,8 @@ pub fn ids_to_zones(dggrs: DGGRS, ids: Vec<DGGRSZone>) -> Result<Zones, DggalErr
     let zones: Vec<Zone> = ids
         .into_iter()
         .map(|id| {
-            let dggal_geo_points: Vec<GeoPoint> = dggrs.getZoneWGS84Vertices(id);
+            //let dggal_geo_points: Vec<GeoPoint> = dggrs.getZoneWGS84Vertices(id);
+            let dggal_geo_points: Vec<GeoPoint> = dggrs.getZoneRefinedWGS84Vertices(id, 0);
             let region: Polygon<f64> = to_polygon(&dggal_geo_points);
 
             let center_point = dggrs.getZoneWGS84Centroid(id);

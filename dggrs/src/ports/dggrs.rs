@@ -7,26 +7,52 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::error::port::PortError;
-use crate::models::common::Zones;
+use crate::error::port::GeoPlegmaError;
+use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
 use geo::Point;
 use geo::Rect;
 
 /// The DGGRS port trait. Each adapter can only implment the functions defined here.
 pub trait DggrsPort: Send + Sync {
+    /// Get zones for geo::Rect bounding box. If no bbox is supplied the whole world is taken.
     fn zones_from_bbox(
         &self,
-        depth: u8,
+        refinement_level: RefinementLevel,
         densify: bool,
         bbox: Option<Rect<f64>>,
-    ) -> Result<Zones, PortError>;
+    ) -> Result<Zones, GeoPlegmaError>;
 
-    fn zone_from_point(&self, depth: u8, point: Point, densify: bool) -> Result<Zones, PortError>; // NOTE:Consider accepting a vector of Points.
+    /// Get zones for a geo::Point.
+    fn zone_from_point(
+        &self,
+        refinement_level: RefinementLevel,
+        point: Point,
+        densify: bool,
+    ) -> Result<Zones, GeoPlegmaError>; // NOTE:Consider accepting a vector of Points.
+
+    /// Get zones based on a parent ZoneID.
     fn zones_from_parent(
         &self,
-        depth: u8,              // FIX: This needs to be relative depth!
+        relative_depth: RelativeDepth,
         parent_zone_id: String, // FIX: This needs to be ZoneID (so integer or string), see relevant enum.
         densify: bool,
-    ) -> Result<Zones, PortError>;
-    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, PortError>; // NOTE: Consider accepting a vector of ZoneIDs
+    ) -> Result<Zones, GeoPlegmaError>;
+
+    /// Get a zone based on a ZoneID
+    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
+
+    /// Get the minimum refinement level of a DGGRS
+    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError>;
+
+    /// Get the maximum refinment level of a DGGRS
+    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError>;
+
+    /// Get the default refinement level of a DGGRS
+    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError>;
+
+    /// Get the  max relative depth of a DGGRS
+    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError>;
+
+    /// Get the  default relative depth of a DGGRS
+    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError>;
 }
