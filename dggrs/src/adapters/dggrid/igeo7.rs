@@ -46,7 +46,7 @@ impl Default for Igeo7Impl {
 impl DggrsPort for Igeo7Impl {
     fn zones_from_bbox(
         &self,
-        depth: RefinementLevel,
+        refinement_level: RefinementLevel,
         densify: bool,
         bbox: Option<Rect<f64>>,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -55,7 +55,7 @@ impl DggrsPort for Igeo7Impl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -88,7 +88,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path,
             &children_path,
             &neighbor_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
         )?;
         common::dggrid_cleanup(
             &meta_path,
@@ -337,24 +337,36 @@ pub fn extract_res_from_z3(id: &str) -> Result<u8, String> {
         .map_err(|_| "Invalid resolution prefix in ZoneID".to_string())
 }
 /// Extract resolution from IGEO7 ID (Z7)
-pub fn extract_res_from_z7(id: &str) -> Result<u8, String> {
-    match id.len() {
-        1 => Ok(0),
-        2 => Ok(1),
-        _ => {
-            let num = u64::from_str_radix(id, 16).map_err(|_| "Invalid hex ZoneID".to_string())?;
+pub fn extract_res_from_z7(dggrid_z7_id: &str) -> Result<u8, String> {
+    // Accept optional 0x prefix
+    let dggrid_z7_id = dggrid_z7_id
+        .strip_prefix("0x")
+        .or_else(|| dggrid_z7_id.strip_prefix("0X"))
+        .unwrap_or(dggrid_z7_id);
 
-            let shifted = num << 4;
+    let v = u64::from_str_radix(dggrid_z7_id, 16)
+        .map_err(|_| "Invalid hex for Z7 INT64".to_string())?;
 
-            let lz = shifted.leading_zeros();
+    // Bits 63..60 = base cell
+    let base_cell = ((v >> 60) & 0xF) as u8;
+    if base_cell > 11 {
+        return Err(format!("Invalid base cell {} (>11)", base_cell));
+    }
 
-            if lz > 63 {
-                return Err("Invalid IGEO7 ZoneID: No resolution mask found".to_string());
-            }
+    // Bits 59..0 = 20 × 3-bit digits. d1 at bits 59..57, ..., d20 at 2..0.
+    let mut resolution: u8 = 20; // default if no padding 7 is found
+    for i in 0..20 {
+        let shift = 60 - 3 * (i + 1); // i=0 => 57 .. i=19 => 0
+        let digit = ((v >> shift) & 0b111) as u8;
 
-            let res = 2 + lz;
-
-            Ok(res as u8)
+        if digit > 7 {
+            return Err(format!("Invalid Z7 digit {} at position {}", digit, i + 1));
+        }
+        if digit == 7 {
+            resolution = i as u8;
+            break;
         }
     }
+
+    Ok(resolution)
 }

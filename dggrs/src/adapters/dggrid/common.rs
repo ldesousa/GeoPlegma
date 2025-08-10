@@ -60,7 +60,7 @@ pub fn dggrid_metafile(
     writeln!(file, "cell_output_type AIGEN")?;
     writeln!(file, "unwrap_points FALSE")?;
     writeln!(file, "output_cell_label_type OUTPUT_ADDRESS_TYPE")?;
-    writeln!(file, "precision 9")?;
+    writeln!(file, "precision 7")?;
     writeln!(file, "dggs_res_spec {}", depth)?;
 
     writeln!(
@@ -110,7 +110,7 @@ pub fn dggrid_parse(
     Ok(result)
 }
 
-pub fn parse_aigen(data: &String, depth: &u8) -> Result<Zones, GeoPlegmaError> {
+pub fn parse_aigen(data: &String, refinement_level: &u8) -> Result<Zones, GeoPlegmaError> {
     let mut zone_id = ZoneId::new_str(&"0")?;
     let mut zones = Zones { zones: Vec::new() };
 
@@ -128,7 +128,7 @@ pub fn parse_aigen(data: &String, depth: &u8) -> Result<Zones, GeoPlegmaError> {
 
         if line_parts.len() == 3 {
             // For ISEA3H prepend zero-padded depth to the ID
-            let id_str = format!("{:02}{}", depth, line_parts[0]);
+            let id_str = format!("{:02}{}", refinement_level, line_parts[0]);
             zone_id = ZoneId::new_str(&id_str)?;
             pnt = Point::new(
                 line_parts[1]
@@ -184,7 +184,7 @@ pub fn dggrid_cleanup(
     let _ = fs::remove_file(bbox_path);
 }
 
-pub fn parse_children(data: &String, depth: &u8) -> Result<Vec<IdArray>, DggridError> {
+pub fn parse_children(data: &String, refinement_level: &u8) -> Result<Vec<IdArray>, DggridError> {
     Ok(data
         .lines()
         .filter_map(|line| {
@@ -193,18 +193,18 @@ pub fn parse_children(data: &String, depth: &u8) -> Result<Vec<IdArray>, DggridE
                 return None;
             }
 
-            let id = Some(format!("{:02}{}", depth, parts[0]));
+            let id = Some(format!("{:02}{}", refinement_level, parts[0]));
             let arr = parts
                 .iter()
                 .skip(1)
-                .map(|s| format!("{:02}{}", depth + 1, s))
+                .map(|s| format!("{:02}{}", refinement_level + 1, s))
                 .collect();
 
             Some(IdArray { id, arr: Some(arr) })
         })
         .collect())
 }
-pub fn parse_neighbors(data: &String, depth: &u8) -> Result<Vec<IdArray>, DggridError> {
+pub fn parse_neighbors(data: &String, refinement_level: &u8) -> Result<Vec<IdArray>, DggridError> {
     Ok(data
         .lines()
         .filter_map(|line| {
@@ -213,11 +213,11 @@ pub fn parse_neighbors(data: &String, depth: &u8) -> Result<Vec<IdArray>, Dggrid
                 return None;
             }
 
-            let id = Some(format!("{:02}{}", depth, parts[0]));
+            let id = Some(format!("{:02}{}", refinement_level, parts[0]));
             let arr = parts
                 .iter()
                 .skip(1)
-                .map(|s| format!("{:02}{}", depth, s))
+                .map(|s| format!("{:02}{}", refinement_level, s))
                 .collect();
 
             Some(IdArray { id, arr: Some(arr) })
@@ -297,10 +297,10 @@ pub fn bbox_to_aigen(bbox: &Rect<f64>, bboxfile: &PathBuf) -> io::Result<()> {
     // First line: ID and center of the bbox (NOT part of the ring)
     let center_x = (minx + maxx) / 2.0;
     let center_y = (miny + maxy) / 2.0;
-    writeln!(file, "1 {:.6} {:.6}", center_x, center_y)?;
+    writeln!(file, "1 {:.7} {:.7}", center_x, center_y)?;
 
     for (x, y) in &vertices {
-        writeln!(file, "{:.6} {:.6}", x, y)?;
+        writeln!(file, "{:.7} {:.7}", x, y)?;
     }
 
     writeln!(file, "END")?;
