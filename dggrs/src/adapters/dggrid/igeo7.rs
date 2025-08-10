@@ -319,15 +319,15 @@ pub fn igeo7_metafile(meta_path: &PathBuf) -> io::Result<()> {
 
 pub fn extract_res_from_cellid(id: &str, dggs_type: &str) -> Result<u8, String> {
     match dggs_type {
-        "ISEA3H" => extract_res_from_z3(id),
-        "IGEO7" => extract_res_from_z3(id), // ToDo: As the extraction of the res based on the Z7
+        "ISEA3H" => extract_res_from_padded_id(id),
+        "IGEO7" => extract_res_from_padded_id(id), // ToDo: As the extraction of the res based on the Z7
         // index does not yet work, I am using the same method as for Z3.
         _ => Err(format!("Unsupported DGGS type: {}", dggs_type)),
     }
 }
 
 /// Extract resolution from ISEA3H ID (Z3)
-pub fn extract_res_from_z3(id: &str) -> Result<u8, String> {
+pub fn extract_res_from_padded_id(id: &str) -> Result<u8, String> {
     if id.len() < 2 {
         return Err("ZoneID too short to extract resolution".to_string());
     }

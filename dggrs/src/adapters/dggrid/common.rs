@@ -48,7 +48,7 @@ pub fn dggrid_setup(workdir: &PathBuf) -> (PathBuf, PathBuf, PathBuf, PathBuf, P
 
 pub fn dggrid_metafile(
     metafile: &PathBuf,
-    depth: &u8,
+    refinement_level: &u8,
     cell_output_file_name: &PathBuf,
     children_output_file_name: &PathBuf,
     neighbor_output_file_name: &PathBuf,
@@ -61,7 +61,8 @@ pub fn dggrid_metafile(
     writeln!(file, "unwrap_points FALSE")?;
     writeln!(file, "output_cell_label_type OUTPUT_ADDRESS_TYPE")?;
     writeln!(file, "precision 7")?;
-    writeln!(file, "dggs_res_spec {}", depth)?;
+    writeln!(file, "dggs_res_spec {}", refinement_level)?;
+    writeln!(file, "z3_invalid_digit 3")?;
 
     writeln!(
         file,
@@ -96,16 +97,16 @@ pub fn dggrid_parse(
     aigen_path: &PathBuf,
     children_path: &PathBuf,
     neighbor_path: &PathBuf,
-    depth: &u8,
+    refinement_level: &u8,
 ) -> Result<Zones, GeoPlegmaError> {
     let aigen_data = read_file(&aigen_path)?;
-    let mut result = parse_aigen(&aigen_data, &depth)?;
+    let mut result = parse_aigen(&aigen_data, &refinement_level)?;
     let children_data = read_file(&children_path)?;
-    let children = parse_children(&children_data, &depth)?;
+    let children = parse_children(&children_data, &refinement_level)?;
     assign_field(&mut result, children, "children");
 
     let neighbor_data = read_file(&neighbor_path)?;
-    let neighbors = parse_neighbors(&neighbor_data, &depth)?;
+    let neighbors = parse_neighbors(&neighbor_data, &refinement_level)?;
     assign_field(&mut result, neighbors, "neighbors");
     Ok(result)
 }
@@ -127,7 +128,7 @@ pub fn parse_aigen(data: &String, refinement_level: &u8) -> Result<Zones, GeoPle
         // second two are the center point
 
         if line_parts.len() == 3 {
-            // For ISEA3H prepend zero-padded depth to the ID
+            // For ISEA3H and IGEO7 prepend zero-padded depth to the ID
             let id_str = format!("{:02}{}", refinement_level, line_parts[0]);
             zone_id = ZoneId::new_str(&id_str)?;
             pnt = Point::new(

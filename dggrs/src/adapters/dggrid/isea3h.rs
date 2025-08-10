@@ -317,15 +317,15 @@ pub fn isea3h_metafile(meta_path: &PathBuf) -> io::Result<()> {
 
 pub fn extract_res_from_cellid(id: &str, dggs_type: &str) -> Result<u8, String> {
     match dggs_type {
-        "ISEA3H" => extract_res_from_z3(id),
-        "IGEO7" => extract_res_from_z3(id), // ToDo: As the extraction of the res based on the Z7
+        "ISEA3H" => extract_res_from_padded_id(id),
+        "IGEO7" => extract_res_from_padded_id(id), // ToDo: As the extraction of the res based on the Z7
         // index does not yet work, I am using the same method as for Z3.
         _ => Err(format!("Unsupported DGGS type: {}", dggs_type)),
     }
 }
 
 /// Extract resolution from ISEA3H ID (Z3)
-pub fn extract_res_from_z3(id: &str) -> Result<u8, String> {
+pub fn extract_res_from_padded_id(id: &str) -> Result<u8, String> {
     if id.len() < 2 {
         return Err("ZoneID too short to extract resolution".to_string());
     }
@@ -334,25 +334,38 @@ pub fn extract_res_from_z3(id: &str) -> Result<u8, String> {
         .parse::<u8>()
         .map_err(|_| "Invalid resolution prefix in ZoneID".to_string())
 }
-/// Extract resolution from IGEO7 ID (Z7)
-pub fn extract_res_from_z7(id: &str) -> Result<u8, String> {
-    match id.len() {
-        1 => Ok(0),
-        2 => Ok(1),
-        _ => {
-            let num = u64::from_str_radix(id, 16).map_err(|_| "Invalid hex ZoneID".to_string())?;
 
-            let shifted = num << 4;
+/// Extract resolution from ISEA3H ID (Z3)
+pub fn extract_res_from_z3(dggrid_z3_id: &str) -> Result<u8, String> {
+    // Accept optional 0x prefix
+    let dggrid_z3_id = dggrid_z3_id
+        .strip_prefix("0x")
+        .or_else(|| dggrid_z3_id.strip_prefix("0X"))
+        .unwrap_or(dggrid_z3_id);
 
-            let lz = shifted.leading_zeros();
+    let v = u64::from_str_radix(dggrid_z3_id, 16)
+        .map_err(|_| "Invalid hex for Z3 INT64".to_string())?;
 
-            if lz > 63 {
-                return Err("Invalid IGEO7 ZoneID: No resolution mask found".to_string());
-            }
+    // Base cell: bits 63..60
+    let base_cell = ((v >> 60) & 0xF) as u8;
+    if base_cell > 11 {
+        return Err(format!("Invalid base cell {} (>11)", base_cell));
+    }
 
-            let res = 2 + lz;
+    // Digits: 30 × 2-bit groups: d1 at bits 59..58, ..., d30 at bits 1..0
+    let mut resolution: u8 = 30; // default if no padding found
+    for i in 0..30 {
+        let shift = 60 - 2 * (i + 1); // i=0 => 58 .. i=29 => 0
+        let digit = ((v >> shift) & 0b11) as u8;
 
-            Ok(res as u8)
+        if digit > 3 {
+            return Err(format!("Invalid Z3 digit {} at position {}", digit, i + 1));
+        }
+        if digit == 3 {
+            resolution = i as u8;
+            break;
         }
     }
+
+    Ok(resolution)
 }
