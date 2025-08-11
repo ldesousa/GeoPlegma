@@ -102,7 +102,7 @@ impl DggrsPort for Igeo7Impl {
 
     fn zone_from_point(
         &self,
-        depth: RefinementLevel,
+        refinement_level: RefinementLevel,
         point: Point,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -111,7 +111,7 @@ impl DggrsPort for Igeo7Impl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -151,7 +151,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path,
             &children_path,
             &neighbor_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
         )?;
         common::dggrid_cleanup(
             &meta_path,
@@ -167,7 +167,6 @@ impl DggrsPort for Igeo7Impl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: String, // ToDo: needs validation function
-        // clip_cell_res: u8,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
