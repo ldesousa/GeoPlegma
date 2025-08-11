@@ -45,7 +45,7 @@ impl Default for Isea3hImpl {
 impl DggrsPort for Isea3hImpl {
     fn zones_from_bbox(
         &self,
-        depth: RefinementLevel,
+        refinement_level: RefinementLevel,
         densify: bool,
         bbox: Option<Rect<f64>>,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -54,7 +54,7 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -87,7 +87,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path,
             &children_path,
             &neighbor_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
         )?;
         common::dggrid_cleanup(
             &meta_path,
@@ -101,7 +101,7 @@ impl DggrsPort for Isea3hImpl {
 
     fn zone_from_point(
         &self,
-        depth: RefinementLevel,
+        refinement_level: RefinementLevel,
         point: Point,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
@@ -110,7 +110,7 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -150,7 +150,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path,
             &children_path,
             &neighbor_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(refinement_level)?,
         )?;
         common::dggrid_cleanup(
             &meta_path,
@@ -164,7 +164,7 @@ impl DggrsPort for Isea3hImpl {
     }
     fn zones_from_parent(
         &self,
-        depth: RelativeDepth,
+        relative_depth: RelativeDepth,
         parent_zone_id: String, // ToDo: needs validation function
         // clip_cell_res: u8,
         densify: bool,
@@ -174,7 +174,7 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(relative_depth)?,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -189,19 +189,16 @@ impl DggrsPort for Isea3hImpl {
             .write(true)
             .open(&meta_path)
             .expect("cannot open file");
-
-        let clip_cell_res = extract_res_from_cellid(&parent_zone_id, "ISEA3H").unwrap();
-
-        let clip_cell_address = &parent_zone_id[2..]; // strip first two characters. ToDo: can we get the res from the index itself?
+        let parent_zone_res = get_refinement_level_from_z3_zone_id(&parent_zone_id).unwrap();
 
         let _ = writeln!(meta_file, "clip_subset_type COARSE_CELLS");
-        let _ = writeln!(meta_file, "clip_cell_res {:?}", clip_cell_res);
+        let _ = writeln!(meta_file, "clip_cell_res {:?}", parent_zone_res);
         let _ = writeln!(
             meta_file,
             "clip_cell_densification {}",
             CLIP_CELL_DENSIFICATION
         );
-        let _ = writeln!(meta_file, "clip_cell_addresses \"{}\"", clip_cell_address);
+        let _ = writeln!(meta_file, "clip_cell_addresses \"{}\"", parent_zone_id);
         let _ = writeln!(meta_file, "input_address_type Z3");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
@@ -209,7 +206,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path,
             &children_path,
             &neighbor_path,
-            &u8::try_from(depth)?,
+            &u8::try_from(relative_depth)?,
         )?;
         common::dggrid_cleanup(
             &meta_path,
@@ -228,11 +225,10 @@ impl DggrsPort for Isea3hImpl {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
-        let clip_cell_res = extract_res_from_cellid(&zone_id, "ISEA3H").unwrap();
-        let depth = clip_cell_res;
+        let refinement_level = get_refinement_level_from_z3_zone_id(&zone_id).unwrap();
         let _ = common::dggrid_metafile(
             &meta_path,
-            &depth,
+            &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -248,8 +244,6 @@ impl DggrsPort for Isea3hImpl {
             .open(&meta_path)
             .expect("cannot open file");
 
-        let zone = &zone_id[2..]; // strip first two characters. ToDo: only if we attached the res to the front
-
         let _ = writeln!(
             meta_file,
             "input_file_name {}",
@@ -263,13 +257,18 @@ impl DggrsPort for Isea3hImpl {
             .create(true)
             .open(&input_path)
             .expect("cannot open file");
-        let _ = writeln!(input_file, "{}", zone).expect("Cannot create zone id input file");
+        let _ = writeln!(input_file, "{}", zone_id).expect("Cannot create zone id input file");
 
         let _ = writeln!(meta_file, "dggrid_operation TRANSFORM_POINTS");
         let _ = writeln!(meta_file, "input_address_type Z3");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path, &depth)?;
+        let result = common::dggrid_parse(
+            &aigen_path,
+            &children_path,
+            &neighbor_path,
+            &refinement_level,
+        )?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -315,28 +314,9 @@ pub fn isea3h_metafile(meta_path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn extract_res_from_cellid(id: &str, dggs_type: &str) -> Result<u8, String> {
-    match dggs_type {
-        "ISEA3H" => extract_res_from_padded_id(id),
-        "IGEO7" => extract_res_from_padded_id(id), // ToDo: As the extraction of the res based on the Z7
-        // index does not yet work, I am using the same method as for Z3.
-        _ => Err(format!("Unsupported DGGS type: {}", dggs_type)),
-    }
-}
-
 /// Extract resolution from ISEA3H ID (Z3)
-pub fn extract_res_from_padded_id(id: &str) -> Result<u8, String> {
-    if id.len() < 2 {
-        return Err("ZoneID too short to extract resolution".to_string());
-    }
-
-    id[..2]
-        .parse::<u8>()
-        .map_err(|_| "Invalid resolution prefix in ZoneID".to_string())
-}
-
-/// Extract resolution from ISEA3H ID (Z3)
-pub fn extract_res_from_z3(dggrid_z3_id: &str) -> Result<u8, String> {
+pub fn get_refinement_level_from_z3_zone_id(dggrid_z3_id: &str) -> Result<u8, String> {
+    // make sure to generate zones with DGGRID version 8.41 and z3_invalid_digit 3
     // Accept optional 0x prefix
     let dggrid_z3_id = dggrid_z3_id
         .strip_prefix("0x")
