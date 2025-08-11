@@ -1,4 +1,4 @@
-// Copyright 2025 contributors to the GeoPlegma project.
+// Copyright 2025 iontributors to the GeoPlegma project.
 // Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
@@ -9,7 +9,7 @@
 
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{Zone, ZoneId, Zones};
+use crate::models::common::{RefinementLevel, Zone, ZoneId, Zones};
 use core::f64;
 use geo::{LineString, Point, Polygon, Rect};
 use rand::distributions::{Alphanumeric, DistString};
@@ -48,7 +48,7 @@ pub fn dggrid_setup(workdir: &PathBuf) -> (PathBuf, PathBuf, PathBuf, PathBuf, P
 
 pub fn dggrid_metafile(
     metafile: &PathBuf,
-    refinement_level: &u8,
+    refinement_level: &RefinementLevel,
     cell_output_file_name: &PathBuf,
     children_output_file_name: &PathBuf,
     neighbor_output_file_name: &PathBuf,
@@ -61,7 +61,7 @@ pub fn dggrid_metafile(
     writeln!(file, "unwrap_points FALSE")?;
     writeln!(file, "output_cell_label_type OUTPUT_ADDRESS_TYPE")?;
     writeln!(file, "precision 7")?;
-    writeln!(file, "dggs_res_spec {}", refinement_level)?;
+    writeln!(file, "dggs_res_spec {}", refinement_level.get())?;
     writeln!(file, "z3_invalid_digit 3")?;
 
     writeln!(

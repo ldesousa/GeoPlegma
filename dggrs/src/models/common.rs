@@ -137,6 +137,9 @@ impl RefinementLevel {
     pub fn get(self) -> i32 {
         self.0
     }
+    pub fn add(self, rd: RelativeDepth) -> Result<Self, GeoPlegmaError> {
+        RefinementLevel::new(self.0 + rd.0)
+    }
 }
 
 // i32 → Depth (fallible)

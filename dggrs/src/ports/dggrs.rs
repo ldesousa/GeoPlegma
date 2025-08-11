@@ -8,7 +8,7 @@
 // except according to those terms.
 
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
+use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::Point;
 use geo::Rect;
 
@@ -26,15 +26,15 @@ pub trait DggrsPort: Send + Sync {
     fn zone_from_point(
         &self,
         refinement_level: RefinementLevel,
-        point: Point,
+        point: Point, // NOTE:Consider accepting a vector of Points.
         densify: bool,
-    ) -> Result<Zones, GeoPlegmaError>; // NOTE:Consider accepting a vector of Points.
+    ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get zones based on a parent ZoneID.
     fn zones_from_parent(
         &self,
         relative_depth: RelativeDepth,
-        parent_zone_id: String, // FIX: This needs to be ZoneID (so integer or string), see relevant enum.
+        parent_zone_id: ZoneId,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError>;
 
