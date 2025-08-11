@@ -84,12 +84,7 @@ impl DggrsPort for Igeo7Impl {
 
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(
-            &aigen_path,
-            &children_path,
-            &neighbor_path,
-            &u8::try_from(refinement_level)?,
-        )?;
+        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -147,12 +142,7 @@ impl DggrsPort for Igeo7Impl {
 
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(
-            &aigen_path,
-            &children_path,
-            &neighbor_path,
-            &u8::try_from(refinement_level)?,
-        )?;
+        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -203,12 +193,7 @@ impl DggrsPort for Igeo7Impl {
         let _ = writeln!(meta_file, "input_address_type Z7");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(
-            &aigen_path,
-            &children_path,
-            &neighbor_path,
-            &u8::try_from(relative_depth)?,
-        )?;
+        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -266,12 +251,7 @@ impl DggrsPort for Igeo7Impl {
         let _ = writeln!(meta_file, "input_address_type Z7");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(
-            &aigen_path,
-            &children_path,
-            &neighbor_path,
-            &refinement_level,
-        )?;
+        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,

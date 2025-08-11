@@ -97,21 +97,20 @@ pub fn dggrid_parse(
     aigen_path: &PathBuf,
     children_path: &PathBuf,
     neighbor_path: &PathBuf,
-    refinement_level: &u8,
 ) -> Result<Zones, GeoPlegmaError> {
     let aigen_data = read_file(&aigen_path)?;
-    let mut result = parse_aigen(&aigen_data, &refinement_level)?;
+    let mut result = parse_aigen(&aigen_data)?;
     let children_data = read_file(&children_path)?;
-    let children = parse_children(&children_data, &refinement_level)?;
+    let children = parse_children(&children_data)?;
     assign_field(&mut result, children, "children");
 
     let neighbor_data = read_file(&neighbor_path)?;
-    let neighbors = parse_neighbors(&neighbor_data, &refinement_level)?;
+    let neighbors = parse_neighbors(&neighbor_data)?;
     assign_field(&mut result, neighbors, "neighbors");
     Ok(result)
 }
 
-pub fn parse_aigen(data: &String, refinement_level: &u8) -> Result<Zones, GeoPlegmaError> {
+pub fn parse_aigen(data: &String) -> Result<Zones, GeoPlegmaError> {
     let mut zone_id = ZoneId::new_str(&"0")?;
     let mut zones = Zones { zones: Vec::new() };
 
@@ -128,9 +127,7 @@ pub fn parse_aigen(data: &String, refinement_level: &u8) -> Result<Zones, GeoPle
         // second two are the center point
 
         if line_parts.len() == 3 {
-            // For ISEA3H and IGEO7 prepend zero-padded depth to the ID
-            let id_str = format!("{:02}{}", refinement_level, line_parts[0]);
-            zone_id = ZoneId::new_str(&id_str)?;
+            zone_id = ZoneId::new_hex(&line_parts[0])?;
             pnt = Point::new(
                 line_parts[1]
                     .parse::<f64>()
@@ -185,7 +182,7 @@ pub fn dggrid_cleanup(
     let _ = fs::remove_file(bbox_path);
 }
 
-pub fn parse_children(data: &String, refinement_level: &u8) -> Result<Vec<IdArray>, DggridError> {
+pub fn parse_children(data: &String) -> Result<Vec<IdArray>, DggridError> {
     Ok(data
         .lines()
         .filter_map(|line| {
@@ -194,18 +191,15 @@ pub fn parse_children(data: &String, refinement_level: &u8) -> Result<Vec<IdArra
                 return None;
             }
 
-            let id = Some(format!("{:02}{}", refinement_level, parts[0]));
-            let arr = parts
-                .iter()
-                .skip(1)
-                .map(|s| format!("{:02}{}", refinement_level + 1, s))
-                .collect();
+            let id = Some(format!("{}", parts[0]));
+            let arr = parts.iter().skip(1).map(|s| format!("{}", s)).collect();
 
             Some(IdArray { id, arr: Some(arr) })
         })
         .collect())
 }
-pub fn parse_neighbors(data: &String, refinement_level: &u8) -> Result<Vec<IdArray>, DggridError> {
+
+pub fn parse_neighbors(data: &String) -> Result<Vec<IdArray>, DggridError> {
     Ok(data
         .lines()
         .filter_map(|line| {
@@ -214,12 +208,8 @@ pub fn parse_neighbors(data: &String, refinement_level: &u8) -> Result<Vec<IdArr
                 return None;
             }
 
-            let id = Some(format!("{:02}{}", refinement_level, parts[0]));
-            let arr = parts
-                .iter()
-                .skip(1)
-                .map(|s| format!("{:02}{}", refinement_level, s))
-                .collect();
+            let id = Some(format!("{}", parts[0]));
+            let arr = parts.iter().skip(1).map(|s| format!("{}", s)).collect();
 
             Some(IdArray { id, arr: Some(arr) })
         })
