@@ -39,7 +39,7 @@ pub trait DggrsPort: Send + Sync {
     ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get a zone based on a ZoneID
-    fn zone_from_id(&self, zone_id: String, densify: bool) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
+    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
 
     /// Get the minimum refinement level of a DGGRS
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError>;

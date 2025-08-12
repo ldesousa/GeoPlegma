@@ -55,7 +55,7 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(refinement_level)?,
+            &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -106,7 +106,7 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(refinement_level)?,
+            &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -157,7 +157,6 @@ impl DggrsPort for Isea3hImpl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        // clip_cell_res: u8,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
@@ -205,11 +204,7 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
-    fn zone_from_id(
-        &self,
-        zone_id: String, // ToDo: needs validation function
-        densify: bool,
-    ) -> Result<Zones, GeoPlegmaError> {
+    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
