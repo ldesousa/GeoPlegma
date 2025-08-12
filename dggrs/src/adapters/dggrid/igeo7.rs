@@ -9,8 +9,9 @@
 
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
+use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{RefinementLevel, RelativeDepth, Zones};
+use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::DggrsPort;
 use core::f64;
 use geo::geometry::Point;
@@ -55,7 +56,7 @@ impl DggrsPort for Igeo7Impl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(refinement_level)?,
+            &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -106,7 +107,7 @@ impl DggrsPort for Igeo7Impl {
 
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(refinement_level)?,
+            &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -156,15 +157,18 @@ impl DggrsPort for Igeo7Impl {
     fn zones_from_parent(
         &self,
         relative_depth: RelativeDepth,
-        parent_zone_id: String, // ToDo: needs validation function
+        parent_zone_id: ZoneId,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
+        let parent_zone_res = get_refinement_level_from_z7_zone_id(&parent_zone_id)?;
+        let target_level = parent_zone_res.add(relative_depth)?;
+
         let _ = common::dggrid_metafile(
             &meta_path,
-            &u8::try_from(relative_depth)?,
+            &target_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
@@ -180,8 +184,6 @@ impl DggrsPort for Igeo7Impl {
             .open(&meta_path)
             .expect("cannot open file");
 
-        let parent_zone_res = get_refinement_level_from_z7_zone_id(&parent_zone_id).unwrap();
-
         let _ = writeln!(meta_file, "clip_subset_type COARSE_CELLS");
         let _ = writeln!(meta_file, "clip_cell_res {:?}", parent_zone_res);
         let _ = writeln!(
@@ -193,7 +195,9 @@ impl DggrsPort for Igeo7Impl {
         let _ = writeln!(meta_file, "input_address_type Z7");
         common::print_file(meta_path.clone());
         common::dggrid_execute(&self.adapter.executable, &meta_path);
+
         let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
+
         common::dggrid_cleanup(
             &meta_path,
             &aigen_path,
@@ -203,11 +207,7 @@ impl DggrsPort for Igeo7Impl {
         );
         Ok(result)
     }
-    fn zone_from_id(
-        &self,
-        zone_id: String, // ToDo: needs validation function
-        densify: bool,
-    ) -> Result<Zones, GeoPlegmaError> {
+    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -230,8 +230,6 @@ impl DggrsPort for Igeo7Impl {
             .open(&meta_path)
             .expect("cannot open file");
 
-        let zone = &zone_id[2..]; // strip first two characters. ToDo: only if we attached the res to the front
-
         let _ = writeln!(
             meta_file,
             "input_file_name {}",
@@ -245,7 +243,7 @@ impl DggrsPort for Igeo7Impl {
             .create(true)
             .open(&input_path)
             .expect("cannot open file");
-        let _ = writeln!(input_file, "{}", zone).expect("Cannot create zone id input file");
+        let _ = writeln!(input_file, "{}", zone_id).expect("Cannot create zone id input file");
 
         let _ = writeln!(meta_file, "dggrid_operation TRANSFORM_POINTS");
         let _ = writeln!(meta_file, "input_address_type Z7");
@@ -298,34 +296,49 @@ pub fn igeo7_metafile(meta_path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-/// Extract resolution from IGEO7 ID (Z7)
-pub fn get_refinement_level_from_z7_zone_id(dggrid_z7_id: &str) -> Result<u8, String> {
-    // Accept optional 0x prefix
-    let dggrid_z7_id = dggrid_z7_id
-        .strip_prefix("0x")
-        .or_else(|| dggrid_z7_id.strip_prefix("0X"))
-        .unwrap_or(dggrid_z7_id);
+/// Determines the refinement level from an IGEO7 (Z7) zone identifier.
+///
+/// This function interprets a Z7 zone identifier as defined by the Z7 indexing scheme, where the first four bits encode the base cell number and the remaining 60 bits are composed of 20 three-bit digits. Digits with values `0` through `6` represent valid resolution steps, while the value `7` indicates padding beyond the zone’s resolution. The refinement level is determined by counting the number of valid digits before the first padding digit. If no padding digit is found, the maximum refinement level of 20 is returned. See [IGEO7: A new hierarchically indexed hexagonal equal-area discrete global grid system ](https://doi.org/10.5194/agile-giss-6-32-2025) for more information.
+///
+/// # Parameters
+/// - `dggrid_z7_id`: A `ZoneId` expected to be in hexadecimal form (`ZoneId::HexId`).
+///
+/// # Returns
+/// - `Ok(RefinementLevel)`: The detected refinement level.
+/// - `Err(GeoPlegmaError)`: If the identifier is not a `HexId`, contains invalid digits, or fails to create a valid `RefinementLevel`.
+///
+/// # Panics
+/// This function will panic if the provided hex string cannot be parsed into a `u64`, though this is not expected when IDs are generated by DGGRID.
+///
+/// # Requirements
+/// Zone identifiers must be generated using DGGRID version 8.41 or later to ensure compatibility with the Z7 format.
+pub fn get_refinement_level_from_z7_zone_id(
+    dggrid_z7_id: &ZoneId,
+) -> Result<RefinementLevel, GeoPlegmaError> {
+    // make sure to generate zones with DGGRID version 8.41
+    let hex = match dggrid_z7_id {
+        ZoneId::HexId(h) => h.as_str(),
+        _ => {
+            return Err(GeoPlegmaError::Dggrid(DggridError::InvalidZ7Format(
+                "Expected ZoneId::HexId".to_string(),
+            )))?;
+        }
+    };
 
-    let v = u64::from_str_radix(dggrid_z7_id, 16)
-        .map_err(|_| "Invalid hex for Z7 INT64".to_string())?;
+    let v = u64::from_str_radix(hex, 16).unwrap(); // NOTE: This should be safe if the hex string is coming from DGGRID.
 
-    // Bits 63..60 = base cell
-    let base_cell = ((v >> 60) & 0xF) as u8;
-    if base_cell > 11 {
-        return Err(format!("Invalid base cell {} (>11)", base_cell));
-    }
-
-    // Bits 59..0 = 20 × 3-bit digits. d1 at bits 59..57, ..., d20 at 2..0.
-    let mut resolution: u8 = 20; // default if no padding 7 is found
+    let mut resolution = RefinementLevel::new(20)?;
     for i in 0..20 {
-        let shift = 60 - 3 * (i + 1); // i=0 => 57 .. i=19 => 0
+        let shift = 60 - 3 * (i + 1);
         let digit = ((v >> shift) & 0b111) as u8;
 
         if digit > 7 {
-            return Err(format!("Invalid Z7 digit {} at position {}", digit, i + 1));
+            return Err(GeoPlegmaError::Dggrid(DggridError::InvalidZ7Format(
+                format!("Invalid Z7 digit {} at position {}", digit, i + 1),
+            )));
         }
         if digit == 7 {
-            resolution = i as u8;
+            resolution = RefinementLevel::new(i)?;
             break;
         }
     }

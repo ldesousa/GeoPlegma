@@ -9,14 +9,21 @@
 
 use crate::{
     error::{h3o::H3oError, port::GeoPlegmaError},
-    models::common::{Zone, ZoneId, Zones},
+    models::common::{RefinementLevel, Zone, ZoneId, Zones},
 };
 use geo::{Coord, CoordsIter, LineString, Point, Polygon};
 use h3o::{Boundary, CellIndex, LatLng, Resolution};
 
 /// Translates integer resolution to H3 string resolution
-pub fn res(depth: u8) -> Resolution {
-    Resolution::try_from(depth).unwrap_or_else(|_| panic!("Invalid H3 depth: {}", depth))
+pub fn refinement_level_to_h3_resolution(
+    refinement_level: RefinementLevel,
+) -> Result<Resolution, GeoPlegmaError> {
+    Resolution::try_from(refinement_level.get()).map_err(|e| {
+        GeoPlegmaError::H3o(H3oError::CannotTranslateToH3Resolution {
+            rf: refinement_level.to_string(),
+            source: e,
+        })
+    })
 }
 
 pub fn boundary_to_polygon(boundary: &Boundary) -> Polygon<f64> {

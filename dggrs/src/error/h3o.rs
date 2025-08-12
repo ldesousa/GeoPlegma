@@ -40,6 +40,13 @@ pub enum H3oError {
     #[error("Invalid resolution for H3 zone ID {zone_id}")]
     ResolutionLimitReached { zone_id: String },
 
+    #[error("Cannot Translate RefinementLevel to Resolution {rf}")]
+    CannotTranslateToH3Resolution {
+        rf: String,
+        #[source]
+        source: InvalidResolution,
+    },
+
     #[error("Missing required zone data")]
     MissingZoneData,
 }
