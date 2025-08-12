@@ -46,6 +46,15 @@ pub enum GeoPlegmaError {
     RelativeDepthLimitReached {
         grid_name: String,
         requested: RelativeDepth,
+        maximum: RelativeDepth,
+    },
+
+    #[error(
+        "Requested zone refinement level + relative depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'"
+    )]
+    RefinementLevelPlusRelativeDepthLimitReached {
+        grid_name: String,
+        requested: RelativeDepth,
         maximum: RefinementLevel,
     },
 
