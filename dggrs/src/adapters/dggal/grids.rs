@@ -80,6 +80,12 @@ impl DggrsPort for DggalImpl {
         parent_zone_id: ZoneId,
         densify: bool,
     ) -> Result<Zones, GeoPlegmaError> {
+        let parent_u64 = parent_zone_id.as_u64().ok_or_else(|| {
+            GeoPlegmaError::UnsupportedZoneIdFormat(
+                "Expected ZoneId::IntId for parent_zone_id".to_string(),
+            )
+        })?;
+
         if relative_depth > self.max_relative_depth()? {
             return Err(GeoPlegmaError::RelativeDepthLimitReached {
                 grid_name: self.grid_name.clone(),
@@ -87,10 +93,11 @@ impl DggrsPort for DggalImpl {
                 maximum: self.max_relative_depth()?,
             });
         };
-        let parent = parent_zone_id.parse::<u64>().expect("Invalid u64 string");
 
         let dggrs = get_dggrs(&self.grid_name)?;
-        let target_level = RefinementLevel::new(dggrs.getZoneLevel(parent))?.add(relative_depth)?;
+
+        let target_level =
+            RefinementLevel::new(dggrs.getZoneLevel(parent_u64))?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
             return Err(
@@ -102,14 +109,19 @@ impl DggrsPort for DggalImpl {
             );
         };
 
-        let zones = dggrs.getSubZones(parent, i32::from(relative_depth));
+        let zones = dggrs.getSubZones(parent_u64, i32::from(relative_depth));
 
         Ok(ids_to_zones(dggrs, zones)?)
     }
     fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
+        let zone_u64 = zone_id.as_u64().ok_or_else(|| {
+            GeoPlegmaError::UnsupportedZoneIdFormat(
+                "Expected ZoneId::IntId for parent_zone_id".to_string(),
+            )
+        })?;
+
         let dggrs = get_dggrs(&self.grid_name)?;
-        let num: u64 = zone_id.parse::<u64>().expect("Invalid u64 string"); // FIX: parent_zone_id needs to be the ZoneID enum not String
-        let zones = vec![num];
+        let zones = vec![zone_u64];
 
         Ok(ids_to_zones(dggrs, zones)?)
     }
