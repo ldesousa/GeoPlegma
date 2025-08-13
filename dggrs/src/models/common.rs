@@ -113,19 +113,14 @@ impl FromStr for ZoneId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
 
-        // 1) 0x/0X prefix => Hex
-        if let Some(rest) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
-            return ZoneId::new_hex(rest);
-        }
-
-        // 2) pure decimal => Int
+        // 1) pure decimal => Int
         if !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) {
             if let Ok(v) = s.parse::<u64>() {
                 return Ok(ZoneId::new_int(v));
             }
         }
 
-        // 3) hex-looking => Hex (let HexString validate)
+        // 2) hex-looking => Hex (let HexString validate)
         let is_hexish = !s.is_empty() && s.bytes().all(|b| b.is_ascii_hexdigit());
         if is_hexish {
             if let Ok(h) = ZoneId::new_hex(s) {
