@@ -10,6 +10,7 @@ use crate::error::port::GeoPlegmaError;
 use geo::{Point, Polygon};
 use std::convert::{From, TryFrom};
 use std::fmt;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct Zone {
@@ -103,6 +104,38 @@ impl ZoneId {
             ZoneId::IntId(i) => Some(*i),
             _ => None,
         }
+    }
+}
+
+impl FromStr for ZoneId {
+    type Err = GeoPlegmaError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim();
+
+        // 1) 0x/0X prefix => Hex
+        if let Some(rest) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+            return ZoneId::new_hex(rest);
+        }
+
+        // 2) pure decimal => Int
+        if !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) {
+            if let Ok(v) = s.parse::<u64>() {
+                return Ok(ZoneId::new_int(v));
+            }
+        }
+
+        // 3) hex-looking => Hex (let HexString validate)
+        let is_hexish = !s.is_empty() && s.bytes().all(|b| b.is_ascii_hexdigit());
+        if is_hexish {
+            if let Ok(h) = ZoneId::new_hex(s) {
+                return Ok(h);
+            }
+            // fall through if it *looks* hex but failed HexString validation
+        }
+
+        // 4) fallback => Str
+        ZoneId::new_str(s)
     }
 }
 
