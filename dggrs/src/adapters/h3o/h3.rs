@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::adapters::h3o::common::{cells_to_zones, refinement_level_to_h3_resolution};
+use crate::adapters::h3o::common::{refinement_level_to_h3_resolution, to_zones};
 use crate::adapters::h3o::h3o::H3oAdapter;
 use crate::error::h3o::H3oError;
 use crate::error::port::GeoPlegmaError;
@@ -15,7 +15,7 @@ use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use geo::{Point, Rect};
 use h3o::geom::{ContainmentMode, TilerBuilder};
-use h3o::{CellIndex, LatLng, Resolution};
+use h3o::{CellIndex, LatLng};
 use std::str::FromStr;
 
 pub const MAX_DEPTH: u8 = 10;
@@ -48,7 +48,7 @@ impl DggrsPort for H3Impl {
         config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
-        let cells: Vec<CellIndex>;
+        let h3o_zones: Vec<CellIndex>;
 
         let mut tiler =
             TilerBuilder::new(refinement_level_to_h3_resolution(RefinementLevel::new(2)?)?)
@@ -58,12 +58,12 @@ impl DggrsPort for H3Impl {
         if let Some(b) = bbox {
             // NOTE: adapt resolution dynamically based on bbox size & depth
             let _ = tiler.add(b.to_polygon());
-            cells = tiler.into_coverage().collect::<Vec<_>>();
+            h3o_zones = tiler.into_coverage().collect::<Vec<_>>();
         } else {
             if refinement_level > self.default_refinement_level()? {
                 return Err(GeoPlegmaError::DepthTooLarge(refinement_level));
             }
-            cells = CellIndex::base_cells()
+            h3o_zones = CellIndex::base_cells()
                 .flat_map(|base| {
                     base.children(
                         refinement_level_to_h3_resolution(refinement_level)
@@ -72,7 +72,7 @@ impl DggrsPort for H3Impl {
                 })
                 .collect::<Vec<_>>();
         }
-        Ok(cells_to_zones(cells)?)
+        Ok(to_zones(h3o_zones, cfg)?)
     }
     fn zone_from_point(
         &self,
@@ -83,9 +83,9 @@ impl DggrsPort for H3Impl {
         let cfg = config.unwrap_or_default();
         let coord = LatLng::new(point.x(), point.y()).expect("valid coord");
 
-        let cell = coord.to_cell(refinement_level_to_h3_resolution(refinement_level)?);
+        let h3o_zone = coord.to_cell(refinement_level_to_h3_resolution(refinement_level)?);
 
-        Ok(cells_to_zones(vec![cell])?)
+        Ok(to_zones(vec![h3o_zone], cfg)?)
     }
     fn zones_from_parent(
         &self,
@@ -109,11 +109,11 @@ impl DggrsPort for H3Impl {
             }));
         }
 
-        let children: Vec<CellIndex> = parent
+        let h3o_sub_zones: Vec<CellIndex> = parent
             .children(refinement_level_to_h3_resolution(target_level)?)
             .collect();
 
-        Ok(cells_to_zones(children)?)
+        Ok(to_zones(h3o_sub_zones, cfg)?)
     }
     fn zone_from_id(
         &self,
@@ -121,14 +121,14 @@ impl DggrsPort for H3Impl {
         config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
-        let cell = CellIndex::from_str(&zone_id.to_string()).map_err(|e| {
+        let h3o_zone = CellIndex::from_str(&zone_id.to_string()).map_err(|e| {
             GeoPlegmaError::H3o(H3oError::InvalidZoneID {
                 zone_id: zone_id.to_string(),
                 source: e,
             })
         })?;
 
-        Ok(cells_to_zones(vec![cell])?)
+        Ok(to_zones(vec![h3o_zone], cfg)?)
     }
 
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {

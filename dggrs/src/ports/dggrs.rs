@@ -12,26 +12,30 @@ use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::{Point, Rect};
 
 pub struct DggrsPortConfig {
+    pub region: bool,
+    pub center: bool,
+    pub vertex_count: bool,
     pub children: bool,
     pub neighbors: bool,
-    pub geometry: bool,
-    pub area: bool,
-    pub geometry_densification: bool,
+    pub area_sqm: bool,
+    pub densify: bool,
 }
 
 impl Default for DggrsPortConfig {
     fn default() -> Self {
         Self {
-            children: false,
-            neighbors: false,
-            geometry: false,
-            area: false,
-            geometry_densification: true,
+            region: true,
+            center: true,
+            vertex_count: true,
+            children: true,
+            neighbors: true,
+            area_sqm: true,
+            densify: true,
         }
     }
 }
 
-/// The DGGRS port trait. Each adapter can only implment the functions defined here.
+/// The DGGRS port trait. Each adapter can only implement the functions defined here.
 pub trait DggrsPort: Send + Sync {
     /// Get zones for geo::Rect bounding box. If no bbox is supplied the whole world is taken.
     fn zones_from_bbox(

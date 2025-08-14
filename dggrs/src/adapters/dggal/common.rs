@@ -57,11 +57,12 @@ pub fn ids_to_zones(dggrs: DGGRS, ids: Vec<DGGRSZone>) -> Result<Zones, DggalErr
 
             Ok(Zone {
                 id: ZoneId::IntId(id),
-                region,
-                vertex_count: count_edges,
-                center,
-                children, // TODO: we need to make an enum for string and integer based indicies
-                neighbors,
+                region: Some(region),
+                center: Some(center),
+                vertex_count: Some(count_edges),
+                children: Some(children),
+                neighbors: Some(neighbors),
+                area_sqm: Some(area_sqm),
             })
         })
         .collect::<Result<Vec<Zone>, DggalError>>()?;

@@ -153,11 +153,12 @@ pub fn parse_aigen(data: &String) -> Result<Zones, GeoPlegmaError> {
 
             let zone = Zone {
                 id: zone_id.clone(),
-                region: ply,
-                center: pnt,
-                vertex_count: v_count - 1,
-                children: None,
-                neighbors: None,
+                region: Some(ply),
+                center: Some(pnt),
+                vertex_count: Some(v_count - 1),
+                children: Some(children),
+                neighbors: Some(neighbors),
+                area_sqm: Some(area_sqm),
             };
             zones.zones.push(zone);
 
