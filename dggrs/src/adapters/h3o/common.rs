@@ -80,13 +80,13 @@ pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zone
             };
 
             let area_sqm = if conf.area_sqm {
-                region.as_ref().map(|r| r.geodesic_area_unsigned())
+                region.as_ref().map(|r| r.geodesic_area_unsigned()) // NOTE: It is also an option to use the build in area function of H3o
             } else {
                 None
             };
 
             let vertex_count = if conf.vertex_count {
-                region.as_ref().map(|r| r.exterior().coords_count() as u32)
+                region.as_ref().map(|r| r.exterior().coords_count() as u32) // NOTE: It is also an option to use the build-in vertex function of H3o
             } else {
                 None
             };
@@ -94,7 +94,7 @@ pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zone
             let children = if conf.children {
                 let chr_res = h3o_zone
                     .resolution()
-                    .succ() // succ() returns an Option, therefore we can use ok_or_else in the next line and not map_err
+                    .succ() // NOTE: succ() returns an Option, therefore we can use ok_or_else in the next line and not map_err
                     .ok_or_else(|| H3oError::ResolutionLimitReached {
                         zone_id: h3o_zone.to_string(),
                     })?;
