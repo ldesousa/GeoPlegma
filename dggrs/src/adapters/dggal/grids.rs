@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::adapters::dggal::common::{bbox_to_geoextent, ids_to_zones, to_geo_point};
+use crate::adapters::dggal::common::{bbox_to_geoextent, to_geo_point, to_zones};
 use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
@@ -62,7 +62,7 @@ impl DggrsPort for DggalImpl {
         let dggrs = get_dggrs(&self.grid_name)?;
 
         let zones = dggrs.listZones(i32::from(refinement_level), &geo_extent);
-        Ok(ids_to_zones(dggrs, zones)?)
+        Ok(to_zones(dggrs, zones, cfg)?)
     }
     fn zone_from_point(
         &self,
@@ -74,7 +74,7 @@ impl DggrsPort for DggalImpl {
         let dggrs = get_dggrs(&self.grid_name)?;
         let zone = dggrs.getZoneFromWGS84Centroid(refinement_level.get(), &to_geo_point(point));
         let zones = vec![zone];
-        Ok(ids_to_zones(dggrs, zones)?)
+        Ok(to_zones(dggrs, zones, cfg)?)
     }
     fn zones_from_parent(
         &self,
@@ -114,7 +114,7 @@ impl DggrsPort for DggalImpl {
 
         let zones = dggrs.getSubZones(parent_u64, i32::from(relative_depth));
 
-        Ok(ids_to_zones(dggrs, zones)?)
+        Ok(to_zones(dggrs, zones, cfg)?)
     }
     fn zone_from_id(
         &self,
@@ -131,7 +131,7 @@ impl DggrsPort for DggalImpl {
         let dggrs = get_dggrs(&self.grid_name)?;
         let zones = vec![zone_u64];
 
-        Ok(ids_to_zones(dggrs, zones)?)
+        Ok(to_zones(dggrs, zones)?)
     }
 
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
