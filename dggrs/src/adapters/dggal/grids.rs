@@ -131,7 +131,7 @@ impl DggrsPort for DggalImpl {
         let dggrs = get_dggrs(&self.grid_name)?;
         let zones = vec![zone_u64];
 
-        Ok(to_zones(dggrs, zones)?)
+        Ok(to_zones(dggrs, zones, cfg)?)
     }
 
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
