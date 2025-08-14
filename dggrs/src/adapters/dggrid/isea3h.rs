@@ -12,7 +12,7 @@ use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use crate::ports::dggrs::DggrsPort;
+use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::{Point, Rect};
 use std::fs;
@@ -47,9 +47,10 @@ impl DggrsPort for Isea3hImpl {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
-        densify: bool,
         bbox: Option<Rect<f64>>,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -59,7 +60,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            cfg.geometry_densification,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -99,8 +100,9 @@ impl DggrsPort for Isea3hImpl {
         &self,
         refinement_level: RefinementLevel,
         point: Point,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -110,7 +112,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            cfg.geometry_densification,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -157,8 +159,9 @@ impl DggrsPort for Isea3hImpl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -171,7 +174,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            cfg.geometry_densification,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -204,7 +207,12 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
-    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
+    fn zone_from_id(
+        &self,
+        zone_id: ZoneId,
+        config: Option<DggrsPortConfig>,
+    ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid_setup(&self.adapter.workdir);
 
@@ -215,7 +223,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            cfg.geometry_densification,
         );
 
         let _ = isea3h_metafile(&meta_path);

@@ -9,8 +9,27 @@
 
 use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use geo::Point;
-use geo::Rect;
+use geo::{Point, Rect};
+
+pub struct DggrsPortConfig {
+    pub children: bool,
+    pub neighbors: bool,
+    pub geometry: bool,
+    pub area: bool,
+    pub geometry_densification: bool,
+}
+
+impl Default for DggrsPortConfig {
+    fn default() -> Self {
+        Self {
+            children: false,
+            neighbors: false,
+            geometry: false,
+            area: false,
+            geometry_densification: true,
+        }
+    }
+}
 
 /// The DGGRS port trait. Each adapter can only implment the functions defined here.
 pub trait DggrsPort: Send + Sync {
@@ -18,8 +37,8 @@ pub trait DggrsPort: Send + Sync {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
-        densify: bool,
         bbox: Option<Rect<f64>>,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get zones for a geo::Point.
@@ -27,7 +46,7 @@ pub trait DggrsPort: Send + Sync {
         &self,
         refinement_level: RefinementLevel,
         point: Point, // NOTE:Consider accepting a vector of Points.
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get zones based on a parent ZoneID.
@@ -35,11 +54,15 @@ pub trait DggrsPort: Send + Sync {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError>;
 
     /// Get a zone based on a ZoneID
-    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
+    fn zone_from_id(
+        &self,
+        zone_id: ZoneId,
+        config: Option<DggrsPortConfig>,
+    ) -> Result<Zones, GeoPlegmaError>; // NOTE: Consider accepting a vector of ZoneIDs
 
     /// Get the minimum refinement level of a DGGRS
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError>;

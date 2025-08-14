@@ -13,7 +13,7 @@ use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
 use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use crate::ports::dggrs::DggrsPort;
+use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;
 use dggal_rust::dggal;
 use geo::{Point, Rect};
@@ -41,9 +41,10 @@ impl DggrsPort for DggalImpl {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
-        densify: bool,
         bbox: Option<Rect<f64>>,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         if refinement_level > self.max_refinement_level()? {
             return Err(GeoPlegmaError::DepthLimitReached {
                 grid_name: self.grid_name.clone(),
@@ -67,8 +68,9 @@ impl DggrsPort for DggalImpl {
         &self,
         refinement_level: RefinementLevel,
         point: Point,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let dggrs = get_dggrs(&self.grid_name)?;
         let zone = dggrs.getZoneFromWGS84Centroid(refinement_level.get(), &to_geo_point(point));
         let zones = vec![zone];
@@ -78,8 +80,9 @@ impl DggrsPort for DggalImpl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let parent_u64 = parent_zone_id.as_u64().ok_or_else(|| {
             GeoPlegmaError::UnsupportedZoneIdFormat(
                 "Expected ZoneId::IntId for parent_zone_id".to_string(),
@@ -113,7 +116,12 @@ impl DggrsPort for DggalImpl {
 
         Ok(ids_to_zones(dggrs, zones)?)
     }
-    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
+    fn zone_from_id(
+        &self,
+        zone_id: ZoneId,
+        config: Option<DggrsPortConfig>,
+    ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let zone_u64 = zone_id.as_u64().ok_or_else(|| {
             GeoPlegmaError::UnsupportedZoneIdFormat(
                 "Expected ZoneId::IntId for parent_zone_id".to_string(),

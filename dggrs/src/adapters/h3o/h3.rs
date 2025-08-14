@@ -12,7 +12,7 @@ use crate::adapters::h3o::h3o::H3oAdapter;
 use crate::error::h3o::H3oError;
 use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use crate::ports::dggrs::DggrsPort;
+use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use geo::{Point, Rect};
 use h3o::geom::{ContainmentMode, TilerBuilder};
 use h3o::{CellIndex, LatLng, Resolution};
@@ -44,9 +44,10 @@ impl DggrsPort for H3Impl {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
-        _densify: bool,
         bbox: Option<Rect<f64>>,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let cells: Vec<CellIndex>;
 
         let mut tiler =
@@ -77,8 +78,9 @@ impl DggrsPort for H3Impl {
         &self,
         refinement_level: RefinementLevel,
         point: Point, // TODO: we should support multiple points at once.
-        _densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let coord = LatLng::new(point.x(), point.y()).expect("valid coord");
 
         let cell = coord.to_cell(refinement_level_to_h3_resolution(refinement_level)?);
@@ -89,8 +91,9 @@ impl DggrsPort for H3Impl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        _densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let parent = CellIndex::from_str(&parent_zone_id.to_string()).map_err(|e| {
             GeoPlegmaError::H3o(H3oError::InvalidZoneID {
                 zone_id: parent_zone_id.to_string(),
@@ -115,8 +118,9 @@ impl DggrsPort for H3Impl {
     fn zone_from_id(
         &self,
         zone_id: ZoneId, // ToDo: needs validation function
-        _densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let cell = CellIndex::from_str(&zone_id.to_string()).map_err(|e| {
             GeoPlegmaError::H3o(H3oError::InvalidZoneID {
                 zone_id: zone_id.to_string(),
