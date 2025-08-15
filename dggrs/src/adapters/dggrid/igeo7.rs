@@ -53,9 +53,9 @@ impl DggrsPort for Igeo7Impl {
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
@@ -67,7 +67,7 @@ impl DggrsPort for Igeo7Impl {
         let _ = igeo7_metafile(&meta_path);
 
         if let Some(bbox) = &bbox {
-            let _ = common::bbox_to_aigen(bbox, &bbox_path);
+            let _ = common::write::bbox(bbox, &bbox_path);
 
             // Append to metafile
             let mut meta_file = OpenOptions::new()
@@ -84,10 +84,10 @@ impl DggrsPort for Igeo7Impl {
             );
         }
 
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::read::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -105,9 +105,9 @@ impl DggrsPort for Igeo7Impl {
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
@@ -143,10 +143,10 @@ impl DggrsPort for Igeo7Impl {
         let _ = writeln!(input_file, "{} {}", point.y(), point.x())
             .expect("Cannot create point input file");
 
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::read::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -164,12 +164,12 @@ impl DggrsPort for Igeo7Impl {
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
         let parent_zone_res = get_refinement_level_from_z7_zone_id(&parent_zone_id)?;
         let target_level = parent_zone_res.add(relative_depth)?;
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &target_level,
             &aigen_path.with_extension(""),
@@ -196,12 +196,12 @@ impl DggrsPort for Igeo7Impl {
         );
         let _ = writeln!(meta_file, "clip_cell_addresses \"{}\"", parent_zone_id);
         let _ = writeln!(meta_file, "input_address_type Z7");
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
 
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
+        let result = common::read::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
 
-        common::dggrid_cleanup(
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -217,10 +217,10 @@ impl DggrsPort for Igeo7Impl {
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
         let refinement_level = get_refinement_level_from_z7_zone_id(&zone_id).unwrap();
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
@@ -255,10 +255,10 @@ impl DggrsPort for Igeo7Impl {
 
         let _ = writeln!(meta_file, "dggrid_operation TRANSFORM_POINTS");
         let _ = writeln!(meta_file, "input_address_type Z7");
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::read::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
