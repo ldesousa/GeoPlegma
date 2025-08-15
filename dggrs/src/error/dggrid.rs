@@ -33,10 +33,19 @@ pub enum DggridError {
     #[error("Missing required zone data")]
     MissingZoneData,
 
-    #[error("Failed to read file {path}: {source}")]
+    // File I/O
+    #[error("Failed to read file {path}")]
     FileRead {
         path: String,
         #[source]
         source: io::Error,
     },
+
+    // Generic I/O passthrough (when you don't need the path)
+    #[error("I/O error: {0}")]
+    Io(#[from] io::Error),
+
+    // When the format itself is broken (no underlying source)
+    #[error("Malformed DGGRID content: {msg}")]
+    Malformed { msg: String },
 }

@@ -130,166 +130,157 @@ pub mod write {
         }
     }
 }
+
 pub mod read {
     use crate::error::dggrid::DggridError;
     use crate::error::port::GeoPlegmaError;
     use crate::models::common::{Zone, ZoneId, Zones};
     use core::f64;
     use geo::{LineString, Point, Polygon};
+    use std::collections::{BTreeMap, HashMap};
     use std::fs;
     use std::fs::File;
     use std::io::{self, BufRead};
     use std::path::{Path, PathBuf};
 
-    #[derive(Debug)]
-    pub struct IdArray {
-        pub id: Option<String>,
-        pub arr: Option<Vec<String>>,
-    }
-
-    pub fn dggrid_parse(
+    pub fn ingest_output(
         aigen_path: &PathBuf,
         children_path: &PathBuf,
-        neighbor_path: &PathBuf,
+        neighbors_path: &PathBuf,
     ) -> Result<Zones, GeoPlegmaError> {
-        let aigen_data = file(&aigen_path)?;
-        let mut result = aigen(&aigen_data)?;
-        let children_data = file(&children_path)?;
-        let children = children(&children_data)?;
-        assign_field(&mut result, children, "children");
+        // the default output
+        let aigen_text = file(&aigen_path)?;
+        let mut zones_map = parse_aigen_to_zones_map(&aigen_text)?;
 
-        let neighbor_data = file(&neighbor_path)?;
-        let neighbors = neighbors(&neighbor_data)?;
-        assign_field(&mut result, neighbors, "neighbors");
-        Ok(result)
-    }
+        // children
+        let children_text = file(&children_path)?;
+        let mut children_map = parse_id_list(&children_text)?;
 
-    pub fn aigen(data: &String) -> Result<Zones, GeoPlegmaError> {
-        let mut zone_id = ZoneId::new_str(&"0")?; // FIX: Use ZoneId::new_hex
-        let mut zones = Zones { zones: Vec::new() };
+        // neighbors
+        let neighbors_text = file(&neighbors_path)?;
+        let mut neighbors_map = parse_id_list(&neighbors_text)?;
 
-        let mut raw_coords: Vec<(f64, f64)> = vec![];
-        let mut region: Polygon;
-        let mut center = Point::new(0.0, 0.0);
-        let mut v_count = 0u32;
-
-        // loop over the entire AIGEN file
-        for line in data.lines() {
-            // println!("{:?}", line);
-            let line_parts: Vec<&str> = line.split_whitespace().collect();
-            // The first line of each hexagon is always 3 strings, the first is the ID and the
-            // second two are the center point
-
-            if line_parts.len() == 3 {
-                zone_id = ZoneId::new_hex(&line_parts[0])?;
-                center = Point::new(
-                    line_parts[1]
-                        .parse::<f64>()
-                        .expect("cannot parse floating point number"),
-                    line_parts[2]
-                        .parse::<f64>()
-                        .expect("cannot parse floating point number"),
-                );
-            // these are coordinate pairs for the region
-            } else if line_parts.len() == 2 {
-                v_count += 1;
-                raw_coords.push((
-                    line_parts[0]
-                        .parse::<f64>()
-                        .expect("cannot parse floating point number"),
-                    line_parts[1]
-                        .parse::<f64>()
-                        .expect("cannot parse floating point number"),
-                ))
-            // if it just 1 part AND it is END AND if the vertex count is larger than 1
-            } else if line_parts.len() == 1 && line_parts[0] == "END" && v_count > 1 {
-                region = Polygon::new(LineString::from(raw_coords.clone()), vec![]);
-
-                let zone = Zone {
-                    id: zone_id.clone(),
-                    region: Some(region),
-                    center: Some(center),
-                    vertex_count: Some(v_count - 1),
-                    children: Some(children),
-                    neighbors: Some(neighbors),
-                    area_sqm: Some(area_sqm),
-                };
-                zones.zones.push(zone);
-
-                // reset
-                raw_coords.clear();
-                v_count = 0;
+        // Asseble outputs
+        for (id, z) in zones_map.iter_mut() {
+            if let Some(v) = children_map.remove(id) {
+                z.children = Some(v);
+            }
+            if let Some(v) = neighbors_map.remove(id) {
+                z.neighbors = Some(v);
             }
         }
-        Ok(zones)
+        Ok(Zones {
+            zones: zones_map.into_values().collect(),
+        })
     }
 
-    pub fn children(data: &String) -> Result<Vec<IdArray>, DggridError> {
-        Ok(data
-            .lines()
-            .filter_map(|line| {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.is_empty() {
-                    return None;
+    /// Used to parse the AIGEN output file of DGGRID that always contains the center and the region
+    fn parse_aigen_to_zones_map(s: &str) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
+        let mut out = BTreeMap::new();
+
+        struct AigenZoneRegionCenter {
+            id: ZoneId,
+            xy: (f64, f64),
+            vec_xy: Vec<(f64, f64)>,
+        }
+        let mut cur: Option<AigenZoneRegionCenter> = None;
+
+        for line in s.lines() {
+            // Each line of the AIGEN file is split at the whitespace
+            let parts: Vec<&str> = line.split_whitespace().collect();
+
+            // Here we match three options:
+            //      1. The ID with x and y for the center
+            //      2. x and y for the polygon (multiple lines)
+            //      3. "END" to signify the end of the polygon geometry
+            //
+            // first step is to take the parts from above and consider the slice only.
+            match parts.as_slice() {
+                // header: <ID> <cx> <cy>  thats the center coordinates after the ID
+                [id_str, cx, cy] => {
+                    cur = Some(AigenZoneRegionCenter {
+                        id: ZoneId::new_hex(id_str)?,
+                        xy: (cx.parse()?, cy.parse()?),
+                        vec_xy: Vec::new(),
+                    });
                 }
-
-                let id = Some(format!("{}", parts[0]));
-                let arr = parts.iter().skip(1).map(|s| format!("{}", s)).collect();
-
-                Some(IdArray { id, arr: Some(arr) })
-            })
-            .collect())
-    }
-
-    pub fn neighbors(data: &String) -> Result<Vec<IdArray>, DggridError> {
-        Ok(data
-            .lines()
-            .filter_map(|line| {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.is_empty() {
-                    return None;
-                }
-
-                let id = Some(format!("{}", parts[0]));
-                let arr = parts.iter().skip(1).map(|s| format!("{}", s)).collect();
-
-                Some(IdArray { id, arr: Some(arr) })
-            })
-            .collect())
-    }
-
-    pub fn assign_field(zones: &mut Zones, data: Vec<IdArray>, field: &str) {
-        for item in data {
-            if let Some(ref id_str) = item.id {
-                let target_id = ZoneId::StrId(id_str.clone());
-                if let Some(cell) = zones.zones.iter_mut().find(|c| c.id == target_id) {
-                    match field {
-                        "children" => {
-                            cell.children = item
-                                .arr
-                                .clone()
-                                .map(|v| v.into_iter().map(ZoneId::StrId).collect())
-                        }
-                        "neighbors" => {
-                            cell.neighbors = item
-                                .arr
-                                .clone()
-                                .map(|v| v.into_iter().map(ZoneId::StrId).collect())
-                        }
-                        _ => panic!("Unknown field: {}", field),
+                // vertex line: <x> <y>
+                [x, y] => {
+                    if let Some(z) = cur.as_mut() {
+                        z.vec_xy.push((x.parse()?, y.parse()?));
                     }
                 }
+                // END marker
+                ["END"] => {
+                    // When END is reachted the vec_xy for the polygon is finished.
+                    if let Some(z) = cur.take() {
+                        let pnt = Some(Point::from(z.xy));
+
+                        let poly = if z.vec_xy.len() >= 2 {
+                            Some(Polygon::new(LineString::from(z.vec_xy.clone()), vec![]))
+                        } else {
+                            None
+                        };
+
+                        out.insert(
+                            z.id.clone(),
+                            Zone {
+                                id: z.id,
+                                center: pnt,
+                                region: poly,
+                                children: None,
+                                neighbors: None,
+                                vertex_count: None,
+                                area_sqm: None,
+                            },
+                        );
+                    }
+                }
+                // ignore blanks or comments
+                [] => {}
+                _ => {
+                    // You can choose to return an error here
+                }
             }
         }
+        Ok(out)
     }
+
+    /// Used to parse the text output from DGGRID for children and neighbors
+    fn parse_id_list(s: &str) -> Result<HashMap<ZoneId, Vec<ZoneId>>, GeoPlegmaError> {
+        let mut map: HashMap<ZoneId, Vec<ZoneId>> = HashMap::new();
+
+        for (lineno, line) in s.lines().enumerate() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+
+            if parts.is_empty() {
+                continue;
+            }
+            let key = ZoneId::new_hex(parts[0])?;
+
+            let vals = parts
+                .iter()
+                .skip(1)
+                .map(|t| ZoneId::new_hex(t))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            if map.insert(key, vals).is_some() {
+                return Err(GeoPlegmaError::Dggrid(DggridError::Malformed {
+                    msg: format!("duplicate key on line {}", lineno + 1),
+                }));
+            }
+        }
+        Ok(map)
+    }
+
     // Read aigen file produced by DGGRID
     // Todo: this is inefficient, use the read_lines function as in print_file
     // https://doc.rust-lang.org/rust-by-example/std_misc/file/read_lines.html
     pub fn file(path: &Path) -> Result<String, DggridError> {
-        Ok(fs::read_to_string(path).map_err(|e| DggridError::FileRead {
+        fs::read_to_string(path).map_err(|e| DggridError::FileRead {
             path: path.display().to_string(),
             source: e,
-        })?)
+        })
     }
 
     pub fn lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>

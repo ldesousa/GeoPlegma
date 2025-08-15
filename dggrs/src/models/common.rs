@@ -28,14 +28,14 @@ pub struct Zones {
     pub zones: Vec<Zone>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ZoneId {
     StrId(String),
     HexId(HexString),
     IntId(u64),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct HexString(String);
 
 impl HexString {
