@@ -9,7 +9,6 @@
 
 pub mod dggrid {
     use rand::distributions::{Alphanumeric, DistString};
-    use std::fs;
     use std::path::PathBuf;
     use std::process::Command;
 
@@ -135,8 +134,9 @@ pub mod read {
     use crate::error::dggrid::DggridError;
     use crate::error::port::GeoPlegmaError;
     use crate::models::common::{Zone, ZoneId, Zones};
+    use crate::ports::dggrs::DggrsPortConfig;
     use core::f64;
-    use geo::{LineString, Point, Polygon};
+    use geo::{GeodesicArea, LineString, Point, Polygon};
     use std::collections::{BTreeMap, HashMap};
     use std::fs;
     use std::fs::File;
@@ -147,26 +147,54 @@ pub mod read {
         aigen_path: &PathBuf,
         children_path: &PathBuf,
         neighbors_path: &PathBuf,
+        conf: &DggrsPortConfig,
     ) -> Result<Zones, GeoPlegmaError> {
         // the default output
         let aigen_text = file(&aigen_path)?;
-        let mut zones_map = parse_aigen_to_zones_map(&aigen_text)?;
+        let mut zones_map = parse_aigen_to_zones_map(&aigen_text, &conf)?;
 
         // children
-        let children_text = file(&children_path)?;
-        let mut children_map = parse_id_list(&children_text)?;
+        let mut children_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.children {
+            let children_text = file(&children_path)?;
+            parse_id_list(&children_text)?
+        } else {
+            HashMap::new()
+        };
 
         // neighbors
-        let neighbors_text = file(&neighbors_path)?;
-        let mut neighbors_map = parse_id_list(&neighbors_text)?;
+        let mut neighbors_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.neighbors {
+            let neighbors_text = file(&neighbors_path)?;
+            parse_id_list(&neighbors_text)?
+        } else {
+            HashMap::new()
+        };
 
-        // Asseble outputs
+        // Assemble outputs
         for (id, z) in zones_map.iter_mut() {
+            // attach children
             if let Some(v) = children_map.remove(id) {
                 z.children = Some(v);
             }
+
+            // attach neighbors
             if let Some(v) = neighbors_map.remove(id) {
                 z.neighbors = Some(v);
+            }
+
+            // vertex count
+            // WARN: actually this is not counting the vertices, it is counting the
+            // corners/nodes/edges of of shapes like triangle, rhombus, pentagon or hexagons
+            if conf.vertex_count {
+                if let Some(ref poly) = z.region {
+                    z.vertex_count = Some(super::helper::corner_count_convex(poly));
+                }
+            }
+
+            // compute area
+            if conf.area_sqm {
+                if let Some(ref poly) = z.region {
+                    z.area_sqm = Some(poly.geodesic_area_unsigned());
+                }
             }
         }
         Ok(Zones {
@@ -175,7 +203,10 @@ pub mod read {
     }
 
     /// Used to parse the AIGEN output file of DGGRID that always contains the center and the region
-    fn parse_aigen_to_zones_map(s: &str) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
+    fn parse_aigen_to_zones_map(
+        s: &str,
+        conf: &DggrsPortConfig,
+    ) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
         let mut out = BTreeMap::new();
 
         struct AigenZoneRegionCenter {
@@ -188,12 +219,11 @@ pub mod read {
         for line in s.lines() {
             // Each line of the AIGEN file is split at the whitespace
             let parts: Vec<&str> = line.split_whitespace().collect();
-
+            // NOTE:
             // Here we match three options:
             //      1. The ID with x and y for the center
             //      2. x and y for the polygon (multiple lines)
             //      3. "END" to signify the end of the polygon geometry
-            //
             // first step is to take the parts from above and consider the slice only.
             match parts.as_slice() {
                 // header: <ID> <cx> <cy>  thats the center coordinates after the ID
@@ -212,8 +242,15 @@ pub mod read {
                 }
                 // END marker
                 ["END"] => {
+                    // NOTE:
                     // When END is reachted the vec_xy for the polygon is finished.
+                    // this also mean that the second END at the end of the file
+                    // cannot take anything and is None.
                     if let Some(z) = cur.take() {
+                        // NOTE:
+                        // there are options to control the cell_output_type and
+                        // point_output_type in DGGRID, maybe we can avoid generating everything
+                        // so we do not have to parse it also.
                         let pnt = Some(Point::from(z.xy));
 
                         let poly = if z.vec_xy.len() >= 2 {
@@ -289,6 +326,16 @@ pub mod read {
     {
         let file = File::open(filename)?;
         Ok(io::BufReader::new(file).lines())
+    }
+}
+
+pub mod helper {
+    use geo::CoordsIter;
+    use geo::prelude::ConvexHull;
+    pub fn corner_count_convex(poly: &geo::Polygon<f64>) -> u32 {
+        let hull: geo::Polygon<f64> = poly.convex_hull();
+        // coords_count() includes the closing vertex => subtract 1
+        (hull.exterior().coords_count() as u32).saturating_sub(1)
     }
 }
 
