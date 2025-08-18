@@ -7,7 +7,6 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::num::TryFromIntError;
 use thiserror::Error;
 
 /// Error type for instantiating DggrsPort adapters via the factory.

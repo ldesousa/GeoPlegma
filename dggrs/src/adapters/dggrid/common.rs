@@ -133,80 +133,16 @@ pub mod write {
 pub mod read {
     use crate::error::dggrid::DggridError;
     use crate::error::port::GeoPlegmaError;
-    use crate::models::common::{Zone, ZoneId, Zones};
-    use crate::ports::dggrs::DggrsPortConfig;
+    use crate::models::common::{Zone, ZoneId};
     use core::f64;
-    use geo::{GeodesicArea, LineString, Point, Polygon};
+    use geo::{LineString, Point, Polygon};
     use std::collections::{BTreeMap, HashMap};
     use std::fs;
     use std::fs::File;
     use std::io::{self, BufRead};
-    use std::path::{Path, PathBuf};
-
-    pub fn ingest_output(
-        aigen_path: &PathBuf,
-        children_path: &PathBuf,
-        neighbors_path: &PathBuf,
-        conf: &DggrsPortConfig,
-    ) -> Result<Zones, GeoPlegmaError> {
-        // the default output
-        let aigen_text = file(&aigen_path)?;
-        let mut zones_map = parse_aigen_to_zones_map(&aigen_text, &conf)?;
-
-        // children
-        let mut children_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.children {
-            let children_text = file(&children_path)?;
-            parse_id_list(&children_text)?
-        } else {
-            HashMap::new()
-        };
-
-        // neighbors
-        let mut neighbors_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.neighbors {
-            let neighbors_text = file(&neighbors_path)?;
-            parse_id_list(&neighbors_text)?
-        } else {
-            HashMap::new()
-        };
-
-        // Assemble outputs
-        for (id, z) in zones_map.iter_mut() {
-            // attach children
-            if let Some(v) = children_map.remove(id) {
-                z.children = Some(v);
-            }
-
-            // attach neighbors
-            if let Some(v) = neighbors_map.remove(id) {
-                z.neighbors = Some(v);
-            }
-
-            // vertex count
-            // WARN: actually this is not counting the vertices, it is counting the
-            // corners/nodes/edges of of shapes like triangle, rhombus, pentagon or hexagons
-            if conf.vertex_count {
-                if let Some(ref poly) = z.region {
-                    z.vertex_count = Some(super::helper::corner_count_convex(poly));
-                }
-            }
-
-            // compute area
-            if conf.area_sqm {
-                if let Some(ref poly) = z.region {
-                    z.area_sqm = Some(poly.geodesic_area_unsigned());
-                }
-            }
-        }
-        Ok(Zones {
-            zones: zones_map.into_values().collect(),
-        })
-    }
-
+    use std::path::Path;
     /// Used to parse the AIGEN output file of DGGRID that always contains the center and the region
-    fn parse_aigen_to_zones_map(
-        s: &str,
-        conf: &DggrsPortConfig,
-    ) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
+    pub fn parse_aigen_to_zones_map(s: &str) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
         let mut out = BTreeMap::new();
 
         struct AigenZoneRegionCenter {
@@ -284,7 +220,7 @@ pub mod read {
     }
 
     /// Used to parse the text output from DGGRID for children and neighbors
-    fn parse_id_list(s: &str) -> Result<HashMap<ZoneId, Vec<ZoneId>>, GeoPlegmaError> {
+    pub fn parse_id_list(s: &str) -> Result<HashMap<ZoneId, Vec<ZoneId>>, GeoPlegmaError> {
         let mut map: HashMap<ZoneId, Vec<ZoneId>> = HashMap::new();
 
         for (lineno, line) in s.lines().enumerate() {
@@ -326,6 +262,87 @@ pub mod read {
     {
         let file = File::open(filename)?;
         Ok(io::BufReader::new(file).lines())
+    }
+}
+
+pub mod output {
+    use crate::error::port::GeoPlegmaError;
+    use crate::models::common::{ZoneId, Zones};
+    use crate::ports::dggrs::DggrsPortConfig;
+    use geo::GeodesicArea;
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    pub fn ingest(
+        aigen_path: &PathBuf,
+        children_path: &PathBuf,
+        neighbors_path: &PathBuf,
+        conf: &DggrsPortConfig,
+    ) -> Result<Zones, GeoPlegmaError> {
+        // the default output
+        let aigen_text = super::read::file(&aigen_path)?;
+        let mut zones_map = super::read::parse_aigen_to_zones_map(&aigen_text)?;
+
+        // children
+        let mut children_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.children {
+            let children_text = super::read::file(&children_path)?;
+            super::read::parse_id_list(&children_text)?
+        } else {
+            HashMap::new()
+        };
+
+        // neighbors
+        let mut neighbors_map: HashMap<ZoneId, Vec<ZoneId>> = if conf.neighbors {
+            let neighbors_text = super::read::file(&neighbors_path)?;
+            super::read::parse_id_list(&neighbors_text)?
+        } else {
+            HashMap::new()
+        };
+
+        // Assemble outputs
+        for (id, z) in zones_map.iter_mut() {
+            // attach children
+            if let Some(v) = children_map.remove(id) {
+                z.children = Some(v);
+            }
+
+            // attach neighbors
+            if let Some(v) = neighbors_map.remove(id) {
+                z.neighbors = Some(v);
+            }
+
+            // vertex count
+            // WARN: actually this is not counting the vertices, it is counting the
+            // corners/nodes/edges of of shapes like triangle, rhombus, pentagon or hexagons
+            if conf.vertex_count {
+                if let Some(ref poly) = z.region {
+                    z.vertex_count = Some(super::helper::corner_count_convex(poly));
+                }
+            }
+
+            // compute area
+            if conf.area_sqm {
+                if let Some(ref poly) = z.region {
+                    // NOTE:
+                    // It may be a good idea to wrap geodesic_area_unsigned into
+                    // a separate extension trait, so that we don't use a different
+                    // calculation elsewhere by accident.
+                    z.area_sqm = Some(poly.geodesic_area_unsigned());
+                }
+            }
+
+            // drop geometry not requested
+            if !conf.region {
+                z.region = None;
+            }
+
+            if !conf.center {
+                z.center = None;
+            }
+        }
+        Ok(Zones {
+            zones: zones_map.into_values().collect(),
+        })
     }
 }
 

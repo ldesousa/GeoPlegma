@@ -86,8 +86,7 @@ impl DggrsPort for Igeo7Impl {
 
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
-        let result =
-            common::read::ingest_output(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
         common::cleanup(
             &meta_path,
             &aigen_path,
@@ -146,8 +145,7 @@ impl DggrsPort for Igeo7Impl {
 
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
-        let result =
-            common::read::ingest_output(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
         common::cleanup(
             &meta_path,
             &aigen_path,
@@ -201,8 +199,7 @@ impl DggrsPort for Igeo7Impl {
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
 
-        let result =
-            common::read::ingest_output(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
 
         common::cleanup(
             &meta_path,
@@ -260,8 +257,7 @@ impl DggrsPort for Igeo7Impl {
         let _ = writeln!(meta_file, "input_address_type Z7");
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
-        let result =
-            common::read::ingest_output(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
         common::cleanup(
             &meta_path,
             &aigen_path,
