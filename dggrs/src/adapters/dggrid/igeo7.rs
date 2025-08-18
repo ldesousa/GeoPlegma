@@ -61,7 +61,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = igeo7_metafile(&meta_path);
@@ -113,7 +113,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = igeo7_metafile(&meta_path);
@@ -175,7 +175,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = igeo7_metafile(&meta_path);
@@ -226,7 +226,7 @@ impl DggrsPort for Igeo7Impl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = igeo7_metafile(&meta_path);

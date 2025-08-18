@@ -11,6 +11,19 @@ use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::{Point, Rect};
 
+/// Addresses all the configuration options that apply to all port functions
+///
+/// Boolean switches are all set to true via the default implementation
+///
+/// The following output can be controlled:
+/// - region geometry
+/// - centroid geometry
+/// - vertex_count (the number of edges/nodes
+/// - children (list of ZoneIds)
+/// - neighbors (list of ZoneIds)
+/// - area_sqm (the area in squaremeter as calculated by `geo`'s geodesic_area_unsigned() function
+/// - densify (region geometry densification)
+///
 pub struct DggrsPortConfig {
     pub region: bool,
     pub center: bool,
@@ -18,7 +31,7 @@ pub struct DggrsPortConfig {
     pub children: bool,
     pub neighbors: bool,
     pub area_sqm: bool,
-    pub densify: bool,
+    pub densify: bool, // TODO:: this is the switch to generate densified gemetry, which is actually not needed for H3 due to the Gnomic projection.
 }
 
 impl Default for DggrsPortConfig {

@@ -36,6 +36,7 @@ pub mod dggrid {
 
 pub mod write {
     use crate::models::common::RefinementLevel;
+    use crate::ports::dggrs::DggrsPortConfig;
     use geo::Rect;
     use std::fs;
     use std::io::{self, Write};
@@ -50,7 +51,7 @@ pub mod write {
         cell_output_file_name: &PathBuf,
         children_output_file_name: &PathBuf,
         neighbor_output_file_name: &PathBuf,
-        densify: bool,
+        conf: &DggrsPortConfig,
     ) -> io::Result<()> {
         debug!("Writing to {:?}", metafile);
         let mut file = fs::File::create(metafile)?;
@@ -60,7 +61,7 @@ pub mod write {
         writeln!(file, "output_cell_label_type OUTPUT_ADDRESS_TYPE")?;
         writeln!(file, "precision 7")?;
         writeln!(file, "dggs_res_spec {}", refinement_level.get())?;
-        writeln!(file, "z3_invalid_digit 3")?;
+        writeln!(file, "z3_invalid_digit 3")?; // TODO: Remove with DGGRID version 9 as this is  only relevant for ISEA3H and only placed here for convenience.
 
         writeln!(
             file,
@@ -68,20 +69,25 @@ pub mod write {
             cell_output_file_name.to_string_lossy().into_owned()
         )?;
 
-        writeln!(file, "neighbor_output_type TEXT")?;
-        writeln!(
-            file,
-            "neighbor_output_file_name {}",
-            neighbor_output_file_name.to_string_lossy().into_owned()
-        )?;
-        writeln!(file, "children_output_type TEXT")?;
-        writeln!(
-            file,
-            "children_output_file_name {}",
-            children_output_file_name.to_string_lossy().into_owned()
-        )?;
+        if conf.neighbors {
+            writeln!(file, "neighbor_output_type TEXT")?;
+            writeln!(
+                file,
+                "neighbor_output_file_name {}",
+                neighbor_output_file_name.to_string_lossy().into_owned()
+            )?;
+        }
 
-        if densify == true {
+        if conf.children {
+            writeln!(file, "children_output_type TEXT")?;
+            writeln!(
+                file,
+                "children_output_file_name {}",
+                children_output_file_name.to_string_lossy().into_owned()
+            )?;
+        }
+
+        if conf.densify {
             writeln!(file, "densification {}", DENSIFICATION)?;
         }
 

@@ -60,7 +60,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -112,7 +112,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -174,7 +174,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -223,7 +223,7 @@ impl DggrsPort for Isea3hImpl {
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            cfg.densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
