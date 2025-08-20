@@ -1,5 +1,5 @@
 // Copyright 2025 contributors to the GeoPlegmata project.
-// Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
+// Originally authored by Michael Jendryke, GeoInsight (michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -11,6 +11,7 @@ use crate::error::dggal::DggalError;
 use crate::error::dggrid::DggridError;
 use crate::error::h3o::H3oError;
 use crate::models::common::{RefinementLevel, RelativeDepth};
+use std::num::ParseFloatError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -69,4 +70,8 @@ pub enum GeoPlegmaError {
 
     #[error("Invalid hex ZoneId: '{0}'")]
     InvalidHexId(String),
+
+    // Parsing primitives
+    #[error("Float parse error: {0}")]
+    Float(#[from] ParseFloatError),
 }

@@ -1,5 +1,5 @@
 // Copyright 2025 contributors to the GeoPlegma project.
-// Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
+// Originally authored by Michael Jendryke, GeoInsight (michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -12,7 +12,7 @@ use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use crate::ports::dggrs::DggrsPort;
+use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::{Point, Rect};
 use std::fs;
@@ -47,25 +47,26 @@ impl DggrsPort for Isea3hImpl {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
-        densify: bool,
         bbox: Option<Rect<f64>>,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
 
         if let Some(bbox) = &bbox {
-            let _ = common::bbox_to_aigen(bbox, &bbox_path);
+            let _ = common::write::bbox(bbox, &bbox_path);
 
             // Append to metafile
             let mut meta_file = OpenOptions::new()
@@ -82,10 +83,10 @@ impl DggrsPort for Isea3hImpl {
             );
         }
 
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -99,18 +100,19 @@ impl DggrsPort for Isea3hImpl {
         &self,
         refinement_level: RefinementLevel,
         point: Point,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -140,10 +142,10 @@ impl DggrsPort for Isea3hImpl {
         let _ = writeln!(input_file, "{} {}", point.y(), point.x())
             .expect("Cannot create point input file");
 
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -157,21 +159,22 @@ impl DggrsPort for Isea3hImpl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        densify: bool,
+        config: Option<DggrsPortConfig>,
     ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
         let parent_zone_res = get_refinement_level_from_z3_zone_id(&parent_zone_id)?;
         let target_level = parent_zone_res.add(relative_depth)?;
 
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &target_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -192,10 +195,10 @@ impl DggrsPort for Isea3hImpl {
         );
         let _ = writeln!(meta_file, "clip_cell_addresses \"{}\"", parent_zone_id);
         let _ = writeln!(meta_file, "input_address_type Z3");
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,
@@ -204,18 +207,23 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
-    fn zone_from_id(&self, zone_id: ZoneId, densify: bool) -> Result<Zones, GeoPlegmaError> {
+    fn zone_from_id(
+        &self,
+        zone_id: ZoneId,
+        config: Option<DggrsPortConfig>,
+    ) -> Result<Zones, GeoPlegmaError> {
+        let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
-            common::dggrid_setup(&self.adapter.workdir);
+            common::dggrid::setup(&self.adapter.workdir);
 
         let refinement_level = get_refinement_level_from_z3_zone_id(&zone_id)?;
-        let _ = common::dggrid_metafile(
+        let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
             &aigen_path.with_extension(""),
             &children_path.with_extension(""),
             &neighbor_path.with_extension(""),
-            densify,
+            &cfg,
         );
 
         let _ = isea3h_metafile(&meta_path);
@@ -244,10 +252,10 @@ impl DggrsPort for Isea3hImpl {
 
         let _ = writeln!(meta_file, "dggrid_operation TRANSFORM_POINTS");
         let _ = writeln!(meta_file, "input_address_type Z3");
-        common::print_file(meta_path.clone());
-        common::dggrid_execute(&self.adapter.executable, &meta_path);
-        let result = common::dggrid_parse(&aigen_path, &children_path, &neighbor_path)?;
-        common::dggrid_cleanup(
+        common::write::file(meta_path.clone());
+        common::dggrid::execute(&self.adapter.executable, &meta_path);
+        let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+        common::cleanup(
             &meta_path,
             &aigen_path,
             &children_path,

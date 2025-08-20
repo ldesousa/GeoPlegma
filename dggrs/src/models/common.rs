@@ -1,5 +1,5 @@
 // Copyright 2025 contributors to the GeoPlegma project.
-// Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
+// Originally authored by Michael Jendryke, GeoInsight (michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -12,29 +12,30 @@ use std::convert::{From, TryFrom};
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Zone {
     pub id: ZoneId,
-    pub region: Polygon,
-    pub center: Point,
-    pub vertex_count: u32,
+    pub region: Option<Polygon>,
+    pub center: Option<Point>,
+    pub vertex_count: Option<u32>,
     pub children: Option<Vec<ZoneId>>,
     pub neighbors: Option<Vec<ZoneId>>,
+    pub area_sqm: Option<f64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Zones {
     pub zones: Vec<Zone>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ZoneId {
     StrId(String),
     HexId(HexString),
     IntId(u64),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct HexString(String);
 
 impl HexString {

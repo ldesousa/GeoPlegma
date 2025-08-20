@@ -1,5 +1,5 @@
 // Copyright 2025 contributors to the GeoPlegmata project.
-// Originally authored by Michael Jendryke (GeoInsight GmbH, michael.jendryke@geoinsight.ai)
+// Originally authored by Michael Jendryke, GeoInsight (michael.jendryke@geoinsight.ai)
 //
 // Licenced under the Apache Licence, Version 2.0 <LICENCE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
@@ -33,10 +33,19 @@ pub enum DggridError {
     #[error("Missing required zone data")]
     MissingZoneData,
 
-    #[error("Failed to read file {path}: {source}")]
+    // File I/O
+    #[error("Failed to read file {path}")]
     FileRead {
         path: String,
         #[source]
         source: io::Error,
     },
+
+    // Generic I/O passthrough (when you don't need the path)
+    #[error("I/O error: {0}")]
+    Io(#[from] io::Error),
+
+    // When the format itself is broken (no underlying source)
+    #[error("Malformed DGGRID content: {msg}")]
+    Malformed { msg: String },
 }
