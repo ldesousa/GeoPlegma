@@ -8,15 +8,22 @@
 // except according to those terms.
 
 use crate::{
-    error::h3o::H3oError,
-    models::common::{Zone, ZoneID, Zones},
+    error::{h3o::H3oError, port::GeoPlegmaError},
+    models::common::{RefinementLevel, Zone, ZoneId, Zones},
 };
 use geo::{Coord, CoordsIter, LineString, Point, Polygon};
 use h3o::{Boundary, CellIndex, LatLng, Resolution};
 
 /// Translates integer resolution to H3 string resolution
-pub fn res(depth: u8) -> Resolution {
-    Resolution::try_from(depth).unwrap_or_else(|_| panic!("Invalid H3 depth: {}", depth))
+pub fn refinement_level_to_h3_resolution(
+    refinement_level: RefinementLevel,
+) -> Result<Resolution, GeoPlegmaError> {
+    Resolution::try_from(refinement_level.get()).map_err(|e| {
+        GeoPlegmaError::H3o(H3oError::CannotTranslateToH3Resolution {
+            rf: refinement_level.to_string(),
+            source: e,
+        })
+    })
 }
 
 pub fn boundary_to_polygon(boundary: &Boundary) -> Polygon<f64> {
@@ -51,11 +58,11 @@ pub fn latlng_to_point(latlng: LatLng) -> Point {
     Point::new(latlng.lng(), latlng.lat())
 }
 
-pub fn cells_to_zones(cells: Vec<CellIndex>) -> Result<Zones, H3oError> {
+pub fn cells_to_zones(cells: Vec<CellIndex>) -> Result<Zones, GeoPlegmaError> {
     let zones: Vec<Zone> = cells
         .into_iter()
         .map(|cell| {
-            let id = ZoneID::StrID(cell.to_string());
+            let id = ZoneId::new_hex(&cell.to_string())?;
 
             let center = LatLng::from(cell);
             let center_point = latlng_to_point(center); // geo::Point
@@ -72,29 +79,27 @@ pub fn cells_to_zones(cells: Vec<CellIndex>) -> Result<Zones, H3oError> {
                     zone_id: cell.to_string(),
                 })?;
 
-            let children_opt = Some(
-                cell.children(child_res)
-                    .map(|c| ZoneID::StrID(c.to_string()))
-                    .collect(),
-            );
+            let children_opt: Vec<ZoneId> = cell
+                .children(child_res)
+                .map(|c| ZoneId::new_hex(&c.to_string()))
+                .collect::<Result<_, _>>()?; // NOTE: In Result<_ , _>> the _ means that the T and E are inferred. 
 
-            let neighbors_opt = Some(
-                cell.grid_disk::<Vec<_>>(1)
-                    .into_iter()
-                    .map(|c| ZoneID::StrID(c.to_string()))
-                    .collect(),
-            );
+            let neighbors_opt: Vec<ZoneId> = cell
+                .grid_disk::<Vec<CellIndex>>(1)
+                .into_iter()
+                .map(|c| ZoneId::new_hex(&c.to_string()))
+                .collect::<Result<_, _>>()?; // NOTE: In Result<_ , _>> the _ means that the T and E are inferred. 
 
             Ok(Zone {
                 id,
                 region,
                 vertex_count,
                 center: center_point,
-                children: children_opt,
-                neighbors: neighbors_opt,
+                children: Some(children_opt),
+                neighbors: Some(neighbors_opt),
             })
         })
-        .collect::<Result<Vec<Zone>, H3oError>>()?;
+        .collect::<Result<Vec<Zone>, GeoPlegmaError>>()?;
 
     Ok(Zones { zones })
 }

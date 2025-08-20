@@ -46,6 +46,15 @@ pub enum GeoPlegmaError {
     RelativeDepthLimitReached {
         grid_name: String,
         requested: RelativeDepth,
+        maximum: RelativeDepth,
+    },
+
+    #[error(
+        "Requested zone refinement level + relative depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'"
+    )]
+    RefinementLevelPlusRelativeDepthLimitReached {
+        grid_name: String,
+        requested: RelativeDepth,
         maximum: RefinementLevel,
     },
 
@@ -54,4 +63,10 @@ pub enum GeoPlegmaError {
 
     #[error("Relative depth too large to convert to u8: {0}")]
     RelativeDepthTooLarge(RelativeDepth),
+
+    #[error("Unsupported ZoneId format '{0}'")]
+    UnsupportedZoneIdFormat(String),
+
+    #[error("Invalid hex ZoneId: '{0}'")]
+    InvalidHexId(String),
 }

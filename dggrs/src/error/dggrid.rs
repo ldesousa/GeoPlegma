@@ -24,6 +24,12 @@ pub enum DggridError {
     #[error("Invalid zone ID format: '{0}'")]
     InvalidZoneIdFormat(String),
 
+    #[error("Invalid Z3 format: '{0}'")]
+    InvalidZ3Format(String),
+
+    #[error("Invalid Z7 format: '{0}'")]
+    InvalidZ7Format(String),
+
     #[error("Missing required zone data")]
     MissingZoneData,
 
