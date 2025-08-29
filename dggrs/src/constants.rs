@@ -7,6 +7,9 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::models::common::{
+    DggrsId, DggrsName, DggrsSpec, DggrsTool, RefinementLevel, RelativeDepth,
+};
 use geo::{Coord, Rect};
 
 pub fn whole_earth_bbox() -> Rect<f64> {
@@ -18,3 +21,96 @@ pub fn whole_earth_bbox() -> Rect<f64> {
         Coord { x: 180.0, y: 90.0 },
     )
 }
+
+pub const DGGRS_SPECS: [DggrsSpec; 9] = [
+    DggrsSpec {
+        id: DggrsId::ISEA3HDGGRID,
+        name: DggrsName::ISEA3H,
+        tool: DggrsTool::DGGRID,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::IGEO7,
+        name: DggrsName::IGEO7,
+        tool: DggrsTool::DGGRID,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::H3,
+        name: DggrsName::H3,
+        tool: DggrsTool::H3O,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::ISEA3HDGGAL,
+        name: DggrsName::ISEA3H,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::IVEA3H,
+        name: DggrsName::IVEA3H,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::ISEA9R,
+        name: DggrsName::ISEA9R,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::IVEA9R,
+        name: DggrsName::IVEA9R,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::RTEA3H,
+        name: DggrsName::RTEA3H,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+    DggrsSpec {
+        id: DggrsId::RTEA9R,
+        name: DggrsName::RTEA9R,
+        tool: DggrsTool::DGGAL,
+        min_refinement_level: RefinementLevel::new_const(1),
+        max_refinement_level: RefinementLevel::new_const(15),
+        default_refinement_level: RefinementLevel::new_const(2),
+        max_relative_depth: RelativeDepth::new_const(3),
+        default_relative_depth: RelativeDepth::new_const(2),
+    },
+];

@@ -12,7 +12,7 @@ use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsId, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;
 use dggal_rust::dggal;
@@ -23,7 +23,8 @@ pub struct DggalImpl {
 }
 
 impl DggalImpl {
-    pub fn new(grid_name: &str) -> Self {
+    pub fn new(id: DggrsId) -> Self {
+        let grid_name = id.spec().name;
         Self {
             grid_name: grid_name.to_string(),
         }
