@@ -27,6 +27,28 @@ pub enum DggrsId {
     RTEA9R,
 }
 
+impl DggrsId {
+    #[inline]
+    const fn idx(self) -> usize {
+        match self {
+            DggrsId::ISEA3HDGGRID => 0,
+            DggrsId::IGEO7 => 1,
+            DggrsId::H3 => 2,
+            DggrsId::ISEA3HDGGAL => 3,
+            DggrsId::IVEA3H => 4,
+            DggrsId::ISEA9R => 5,
+            DggrsId::IVEA9R => 6,
+            DggrsId::RTEA3H => 7,
+            DggrsId::RTEA9R => 8,
+        }
+    }
+
+    #[inline]
+    pub fn spec(self) -> &'static DggrsSpec {
+        &DGGRS_SPECS[self.idx()]
+    }
+}
+
 impl fmt::Display for DggrsId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
@@ -100,28 +122,6 @@ pub struct DggrsSpec {
     pub default_refinement_level: RefinementLevel,
     pub max_relative_depth: RelativeDepth,
     pub default_relative_depth: RelativeDepth,
-}
-
-impl DggrsId {
-    #[inline]
-    const fn idx(self) -> usize {
-        match self {
-            DggrsId::ISEA3HDGGRID => 0,
-            DggrsId::IGEO7 => 1,
-            DggrsId::H3 => 2,
-            DggrsId::ISEA3HDGGAL => 3,
-            DggrsId::IVEA3H => 4,
-            DggrsId::ISEA9R => 5,
-            DggrsId::IVEA9R => 6,
-            DggrsId::RTEA3H => 7,
-            DggrsId::RTEA9R => 8,
-        }
-    }
-
-    #[inline]
-    pub fn spec(self) -> &'static DggrsSpec {
-        &DGGRS_SPECS[self.idx()]
-    }
 }
 
 #[derive(Debug, Clone, Default)]
