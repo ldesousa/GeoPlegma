@@ -15,7 +15,7 @@ use std::str::FromStr;
 
 // NOTE: The naming needs to be adjusted to the DGGRS Registry
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DggrsId {
+pub enum DggrsUid {
     ISEA3HDGGRID,
     IGEO7,
     H3,
@@ -27,19 +27,19 @@ pub enum DggrsId {
     RTEA9R,
 }
 
-impl DggrsId {
+impl DggrsUid {
     #[inline]
     const fn idx(self) -> usize {
         match self {
-            DggrsId::ISEA3HDGGRID => 0,
-            DggrsId::IGEO7 => 1,
-            DggrsId::H3 => 2,
-            DggrsId::ISEA3HDGGAL => 3,
-            DggrsId::IVEA3H => 4,
-            DggrsId::ISEA9R => 5,
-            DggrsId::IVEA9R => 6,
-            DggrsId::RTEA3H => 7,
-            DggrsId::RTEA9R => 8,
+            DggrsUid::ISEA3HDGGRID => 0,
+            DggrsUid::IGEO7 => 1,
+            DggrsUid::H3 => 2,
+            DggrsUid::ISEA3HDGGAL => 3,
+            DggrsUid::IVEA3H => 4,
+            DggrsUid::ISEA9R => 5,
+            DggrsUid::IVEA9R => 6,
+            DggrsUid::RTEA3H => 7,
+            DggrsUid::RTEA9R => 8,
         }
     }
 
@@ -49,18 +49,18 @@ impl DggrsId {
     }
 }
 
-impl fmt::Display for DggrsId {
+impl fmt::Display for DggrsUid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            DggrsId::ISEA3HDGGRID => "ISEA3HDGGRID",
-            DggrsId::IGEO7 => "IGEO7",
-            DggrsId::H3 => "H3",
-            DggrsId::ISEA3HDGGAL => "ISEA3HDGGAL",
-            DggrsId::IVEA3H => "IVEA3H",
-            DggrsId::IVEA9R => "IVEA9R",
-            DggrsId::ISEA9R => "ISEA9R",
-            DggrsId::RTEA3H => "RTEA3H",
-            DggrsId::RTEA9R => "RTEA9R",
+            DggrsUid::ISEA3HDGGRID => "ISEA3HDGGRID",
+            DggrsUid::IGEO7 => "IGEO7",
+            DggrsUid::H3 => "H3",
+            DggrsUid::ISEA3HDGGAL => "ISEA3HDGGAL",
+            DggrsUid::IVEA3H => "IVEA3H",
+            DggrsUid::IVEA9R => "IVEA9R",
+            DggrsUid::ISEA9R => "ISEA9R",
+            DggrsUid::RTEA3H => "RTEA3H",
+            DggrsUid::RTEA9R => "RTEA9R",
         };
         f.write_str(s)
     }
@@ -114,7 +114,7 @@ impl fmt::Display for DggrsTool {
 
 #[derive(Debug, Clone)]
 pub struct DggrsSpec {
-    pub id: DggrsId,
+    pub id: DggrsUid,
     pub name: DggrsName,
     pub tool: DggrsTool,
     pub min_refinement_level: RefinementLevel,

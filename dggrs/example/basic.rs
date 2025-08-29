@@ -8,21 +8,21 @@
 // except according to those terms.
 use dggrs::error;
 use dggrs::factory;
-use dggrs::models::common::{DggrsId, RefinementLevel, RelativeDepth};
+use dggrs::models::common::{DggrsUid, RefinementLevel, RelativeDepth};
 use geo::{Point, Rect};
 
 /// This is just an example and basic testing function if there is output or not
 pub fn main() -> Result<(), error::port::GeoPlegmaError> {
     let dt = vec![
-        DggrsId::ISEA3HDGGRID,
-        DggrsId::IGEO7,
-        DggrsId::H3,
-        DggrsId::ISEA3HDGGAL,
-        DggrsId::IVEA3H,
-        DggrsId::IVEA9R,
-        DggrsId::IVEA3H,
-        DggrsId::RTEA9R,
-        DggrsId::RTEA3H,
+        DggrsUid::ISEA3HDGGRID,
+        DggrsUid::IGEO7,
+        DggrsUid::H3,
+        DggrsUid::ISEA3HDGGAL,
+        DggrsUid::IVEA3H,
+        DggrsUid::IVEA9R,
+        DggrsUid::IVEA3H,
+        DggrsUid::RTEA9R,
+        DggrsUid::RTEA3H,
     ];
 
     let points = vec![

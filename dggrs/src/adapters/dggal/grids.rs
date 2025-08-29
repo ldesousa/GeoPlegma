@@ -12,18 +12,18 @@ use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{DggrsId, DggrsName, RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;
 use dggal_rust::dggal;
 use geo::{Point, Rect};
 
 pub struct DggalImpl {
-    pub id: DggrsId,
+    pub id: DggrsUid,
 }
 
 impl DggalImpl {
-    pub fn new(id: DggrsId) -> Self {
+    pub fn new(id: DggrsUid) -> Self {
         Self { id }
     }
 

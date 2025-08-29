@@ -11,7 +11,7 @@ use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{DggrsId, DggrsName, RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::geometry::Point;
@@ -24,7 +24,7 @@ pub const CLIP_CELL_DENSIFICATION: u8 = 50; // DGGRID option
 use geo::Rect;
 
 pub struct Igeo7Impl {
-    id: DggrsId,
+    id: DggrsUid,
     adapter: DggridAdapter,
 }
 
@@ -32,7 +32,7 @@ impl Igeo7Impl {
     // Optional: allow custom paths too
     pub fn new(executable: PathBuf, workdir: PathBuf) -> Self {
         Self {
-            id: DggrsId::IGEO7,
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::new(executable, workdir),
         }
     }
@@ -41,7 +41,7 @@ impl Igeo7Impl {
 impl Default for Igeo7Impl {
     fn default() -> Self {
         Self {
-            id: DggrsId::IGEO7,
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::default(),
         }
     }

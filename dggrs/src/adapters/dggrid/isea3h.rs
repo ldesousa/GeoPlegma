@@ -11,7 +11,7 @@ use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{DggrsId, DggrsName, RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::{Point, Rect};
@@ -23,7 +23,7 @@ use tracing::debug;
 pub const CLIP_CELL_DENSIFICATION: u8 = 50; // DGGRID option
 
 pub struct Isea3hImpl {
-    id: DggrsId,
+    id: DggrsUid,
     adapter: DggridAdapter,
 }
 
@@ -31,7 +31,7 @@ impl Isea3hImpl {
     // Optional: allow custom paths too
     pub fn new(executable: PathBuf, workdir: PathBuf) -> Self {
         Self {
-            id: DggrsId::ISEA3HDGGRID,
+            id: DggrsUid::ISEA3HDGGRID,
             adapter: DggridAdapter::new(executable, workdir),
         }
     }
@@ -40,7 +40,7 @@ impl Isea3hImpl {
 impl Default for Isea3hImpl {
     fn default() -> Self {
         Self {
-            id: DggrsId::ISEA3HDGGRID,
+            id: DggrsUid::ISEA3HDGGRID,
             adapter: DggridAdapter::default(),
         }
     }
