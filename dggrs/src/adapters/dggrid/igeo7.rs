@@ -11,7 +11,7 @@ use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::geometry::Point;
