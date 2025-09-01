@@ -62,7 +62,7 @@ impl DggrsPort for H3Impl {
             h3o_zones = tiler.into_coverage().collect::<Vec<_>>();
         } else {
             if refinement_level > self.default_refinement_level()? {
-                return Err(GeoPlegmaError::DepthTooLarge(refinement_level));
+                return Err(GeoPlegmaError::RefinementLevelTooHigh(refinement_level));
             }
             h3o_zones = CellIndex::base_cells()
                 .flat_map(|base| {
@@ -105,9 +105,13 @@ impl DggrsPort for H3Impl {
         let target_level = RefinementLevel::new(parent.resolution() as i32)?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
-            return Err(GeoPlegmaError::H3o(H3oError::ResolutionLimitReached {
-                zone_id: parent.to_string(),
-            }));
+            return Err(
+                GeoPlegmaError::RefinementLevelPlusRelativeDepthLimitReached {
+                    grid_name: self.id.spec().name.to_string(),
+                    requested: relative_depth,
+                    maximum: self.max_refinement_level()?,
+                },
+            );
         }
 
         let h3o_sub_zones: Vec<CellIndex> = parent

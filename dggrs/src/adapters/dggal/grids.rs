@@ -49,7 +49,7 @@ impl DggrsPort for DggalImpl {
     ) -> Result<Zones, GeoPlegmaError> {
         let cfg = config.unwrap_or_default();
         if refinement_level > self.max_refinement_level()? {
-            return Err(GeoPlegmaError::DepthLimitReached {
+            return Err(GeoPlegmaError::RefinementLevelLimitReached {
                 grid_name: self.grid_name().to_string(),
                 requested: refinement_level,
                 maximum: self.max_refinement_level()?,

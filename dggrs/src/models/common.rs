@@ -323,7 +323,7 @@ impl TryFrom<RefinementLevel> for u8 {
     type Error = GeoPlegmaError;
 
     fn try_from(d: RefinementLevel) -> Result<Self, Self::Error> {
-        u8::try_from(d.0).map_err(|_| GeoPlegmaError::DepthTooLarge(d))
+        u8::try_from(d.0).map_err(|_| GeoPlegmaError::RefinementLevelTooHigh(d))
     }
 }
 
