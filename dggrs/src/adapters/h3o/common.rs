@@ -92,6 +92,7 @@ pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zone
             };
 
             let children = if conf.children {
+                //FIX: don't prodcuce any children if max_refinement_level has been reached
                 let chr_res = h3o_zone
                     .resolution()
                     .succ() // NOTE: succ() returns an Option, therefore we can use ok_or_else in the next line and not map_err
