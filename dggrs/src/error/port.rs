@@ -15,7 +15,7 @@ use std::num::ParseFloatError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum GeoPlegmaError {
+pub enum DggrsError {
     #[error("DGGAL error: {0}")]
     Dggal(#[from] DggalError),
 

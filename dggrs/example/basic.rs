@@ -7,12 +7,14 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 use dggrs::error;
-use dggrs::factory;
 use dggrs::models::common::{DggrsUid, RefinementLevel, RelativeDepth};
+use dggrs::{get, registry};
 use geo::{Point, Rect};
 
 /// This is just an example and basic testing function if there is output or not
-pub fn main() -> Result<(), error::port::GeoPlegmaError> {
+pub fn main() -> Result<(), error::port::DggrsError> {
+    println!("{:?}", registry());
+
     let dt = vec![
         DggrsUid::ISEA3HDGGRID,
         DggrsUid::IGEO7,
@@ -50,7 +52,7 @@ pub fn main() -> Result<(), error::port::GeoPlegmaError> {
                     &p,
                     &rf
                 );
-                let d = factory::dggrs_factory::get(*did).unwrap();
+                let d = get(*did).unwrap();
                 let r = d.zone_from_point(*rf, p, None)?;
                 println!(
                     "{:?} \nzone from point generated {} zones",

@@ -139,7 +139,7 @@ pub mod write {
 
 pub mod read {
     use crate::error::dggrid::DggridError;
-    use crate::error::port::GeoPlegmaError;
+    use crate::error::port::DggrsError;
     use crate::models::common::{Zone, ZoneId};
     use core::f64;
     use geo::{LineString, Point, Polygon};
@@ -149,7 +149,7 @@ pub mod read {
     use std::io::{self, BufRead};
     use std::path::Path;
     /// Used to parse the AIGEN output file of DGGRID that always contains the center and the region
-    pub fn parse_aigen_to_zones_map(s: &str) -> Result<BTreeMap<ZoneId, Zone>, GeoPlegmaError> {
+    pub fn parse_aigen_to_zones_map(s: &str) -> Result<BTreeMap<ZoneId, Zone>, DggrsError> {
         let mut out = BTreeMap::new();
 
         struct AigenZoneRegionCenter {
@@ -227,7 +227,7 @@ pub mod read {
     }
 
     /// Used to parse the text output from DGGRID for children and neighbors
-    pub fn parse_id_list(s: &str) -> Result<HashMap<ZoneId, Vec<ZoneId>>, GeoPlegmaError> {
+    pub fn parse_id_list(s: &str) -> Result<HashMap<ZoneId, Vec<ZoneId>>, DggrsError> {
         let mut map: HashMap<ZoneId, Vec<ZoneId>> = HashMap::new();
 
         for (lineno, line) in s.lines().enumerate() {
@@ -245,7 +245,7 @@ pub mod read {
                 .collect::<Result<Vec<_>, _>>()?;
 
             if map.insert(key, vals).is_some() {
-                return Err(GeoPlegmaError::Dggrid(DggridError::Malformed {
+                return Err(DggrsError::Dggrid(DggridError::Malformed {
                     msg: format!("duplicate key on line {}", lineno + 1),
                 }));
             }
@@ -273,7 +273,7 @@ pub mod read {
 }
 
 pub mod output {
-    use crate::error::port::GeoPlegmaError;
+    use crate::error::port::DggrsError;
     use crate::models::common::{ZoneId, Zones};
     use crate::ports::dggrs::DggrsPortConfig;
     use geo::GeodesicArea;
@@ -285,7 +285,7 @@ pub mod output {
         children_path: &PathBuf,
         neighbors_path: &PathBuf,
         conf: &DggrsPortConfig,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         // the default output
         let aigen_text = super::read::file(&aigen_path)?;
         let mut zones_map = super::read::parse_aigen_to_zones_map(&aigen_text)?;

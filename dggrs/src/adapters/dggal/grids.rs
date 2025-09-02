@@ -11,7 +11,7 @@ use crate::adapters::dggal::common::{bbox_to_geoextent, to_geo_point, to_zones};
 use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
 use crate::error::dggal::DggalError;
-use crate::error::port::GeoPlegmaError;
+use crate::error::port::DggrsError;
 use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;
@@ -46,10 +46,10 @@ impl DggrsPort for DggalImpl {
         refinement_level: RefinementLevel,
         bbox: Option<Rect<f64>>,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         if refinement_level > self.max_refinement_level()? {
-            return Err(GeoPlegmaError::RefinementLevelLimitReached {
+            return Err(DggrsError::RefinementLevelLimitReached {
                 grid_name: self.grid_name().to_string(),
                 requested: refinement_level,
                 maximum: self.max_refinement_level()?,
@@ -72,7 +72,7 @@ impl DggrsPort for DggalImpl {
         refinement_level: RefinementLevel,
         point: Point,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let dggrs = self.get_dggrs()?;
         let zone = dggrs.getZoneFromWGS84Centroid(refinement_level.get(), &to_geo_point(point));
@@ -84,16 +84,16 @@ impl DggrsPort for DggalImpl {
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let parent_u64 = parent_zone_id.as_u64().ok_or_else(|| {
-            GeoPlegmaError::UnsupportedZoneIdFormat(
+            DggrsError::UnsupportedZoneIdFormat(
                 "Expected ZoneId::IntId for parent_zone_id".to_string(),
             )
         })?;
 
         if relative_depth > self.max_relative_depth()? {
-            return Err(GeoPlegmaError::RelativeDepthLimitReached {
+            return Err(DggrsError::RelativeDepthLimitReached {
                 grid_name: self.grid_name().to_string(),
                 requested: relative_depth,
                 maximum: self.max_relative_depth()?,
@@ -106,13 +106,11 @@ impl DggrsPort for DggalImpl {
             RefinementLevel::new(dggrs.getZoneLevel(parent_u64))?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
-            return Err(
-                GeoPlegmaError::RefinementLevelPlusRelativeDepthLimitReached {
-                    grid_name: self.grid_name().to_string(),
-                    requested: relative_depth,
-                    maximum: self.max_refinement_level()?,
-                },
-            );
+            return Err(DggrsError::RefinementLevelPlusRelativeDepthLimitReached {
+                grid_name: self.grid_name().to_string(),
+                requested: relative_depth,
+                maximum: self.max_refinement_level()?,
+            });
         };
 
         let zones = dggrs.getSubZones(parent_u64, i32::from(relative_depth));
@@ -123,10 +121,10 @@ impl DggrsPort for DggalImpl {
         &self,
         zone_id: ZoneId,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let zone_u64 = zone_id.as_u64().ok_or_else(|| {
-            GeoPlegmaError::UnsupportedZoneIdFormat(
+            DggrsError::UnsupportedZoneIdFormat(
                 "Expected ZoneId::IntId for parent_zone_id".to_string(),
             )
         })?;
@@ -137,23 +135,23 @@ impl DggrsPort for DggalImpl {
         Ok(to_zones(dggrs, zones, cfg)?)
     }
 
-    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().min_refinement_level)
     }
 
-    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn max_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().max_refinement_level)
     }
 
-    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn default_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().default_refinement_level)
     }
 
-    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn max_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().max_relative_depth)
     }
 
-    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn default_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().default_relative_depth)
     }
 }
