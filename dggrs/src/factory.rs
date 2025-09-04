@@ -11,8 +11,7 @@ use crate::adapters::{
     dggal::grids::DggalImpl, dggrid::igeo7::Igeo7Impl, dggrid::isea3h::Isea3hImpl, h3o::h3::H3Impl,
 };
 use crate::constants::DGGRS_SPECS;
-use crate::error::factory::DggrsUidError;
-use crate::error::factory::FactoryError;
+use crate::error::factory::{DggrsUidError, FactoryError};
 use crate::models::common::{DggrsSpec, DggrsTool, DggrsUid};
 use crate::ports::dggrs::DggrsPort;
 use std::sync::Arc;

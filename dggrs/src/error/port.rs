@@ -7,6 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::error::FactoryError;
 use crate::error::dggal::DggalError;
 use crate::error::dggrid::DggridError;
 use crate::error::h3o::H3oError;
@@ -16,6 +17,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum DggrsError {
+    #[error("Factory error: {0}")]
+    Factory(#[from] FactoryError),
+
     #[error("DGGAL error: {0}")]
     Dggal(#[from] DggalError),
 

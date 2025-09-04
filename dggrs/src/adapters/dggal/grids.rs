@@ -10,8 +10,8 @@
 use crate::adapters::dggal::common::{bbox_to_geoextent, to_geo_point, to_zones};
 use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
+use crate::error::DggrsError;
 use crate::error::dggal::DggalError;
-use crate::error::port::DggrsError;
 use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;

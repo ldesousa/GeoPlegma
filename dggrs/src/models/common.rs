@@ -7,8 +7,8 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 use crate::constants::DGGRS_SPECS;
+use crate::error::DggrsError;
 use crate::error::factory::DggrsUidError;
-use crate::error::port::DggrsError;
 use crate::registry;
 use geo::{Point, Polygon};
 use std::convert::{From, TryFrom};

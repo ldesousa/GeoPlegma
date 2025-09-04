@@ -139,7 +139,7 @@ pub mod write {
 
 pub mod read {
     use crate::error::dggrid::DggridError;
-    use crate::error::port::DggrsError;
+    use crate::error::DggrsError;
     use crate::models::common::{Zone, ZoneId};
     use core::f64;
     use geo::{LineString, Point, Polygon};
@@ -273,7 +273,7 @@ pub mod read {
 }
 
 pub mod output {
-    use crate::error::port::DggrsError;
+    use crate::error::DggrsError;
     use crate::models::common::{ZoneId, Zones};
     use crate::ports::dggrs::DggrsPortConfig;
     use geo::GeodesicArea;

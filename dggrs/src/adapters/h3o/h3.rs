@@ -10,7 +10,7 @@
 use crate::adapters::h3o::common::{refinement_level_to_h3_resolution, to_zones};
 use crate::adapters::h3o::h3o::H3oAdapter;
 use crate::error::h3o::H3oError;
-use crate::error::port::DggrsError;
+use crate::error::DggrsError;
 use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use geo::{Point, Rect};

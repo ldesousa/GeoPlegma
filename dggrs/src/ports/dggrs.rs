@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::error::port::DggrsError;
+use crate::error::DggrsError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::{Point, Rect};
 

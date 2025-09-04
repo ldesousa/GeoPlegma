@@ -8,7 +8,7 @@
 // except according to those terms.
 
 use crate::{
-    error::{h3o::H3oError, port::DggrsError},
+    error::{h3o::H3oError, DggrsError},
     models::common::{RefinementLevel, Zone, ZoneId, Zones},
     ports::dggrs::DggrsPortConfig,
 };
