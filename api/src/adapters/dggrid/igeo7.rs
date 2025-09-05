@@ -9,49 +9,50 @@
 
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
+use crate::api::{DggrsApi, DggrsApiConfig};
 use crate::error::DggrsError;
 use crate::error::dggrid::DggridError;
 use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
-use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
-use geo::{Point, Rect};
+use geo::geometry::Point;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use tracing::debug;
 pub const CLIP_CELL_DENSIFICATION: u8 = 50; // DGGRID option
+use geo::Rect;
 
-pub struct Isea3hImpl {
+pub struct Igeo7Impl {
     id: DggrsUid,
     adapter: DggridAdapter,
 }
 
-impl Isea3hImpl {
+impl Igeo7Impl {
     // Optional: allow custom paths too
     pub fn new(executable: PathBuf, workdir: PathBuf) -> Self {
         Self {
-            id: DggrsUid::ISEA3HDGGRID,
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::new(executable, workdir),
         }
     }
 }
 
-impl Default for Isea3hImpl {
+impl Default for Igeo7Impl {
     fn default() -> Self {
         Self {
-            id: DggrsUid::ISEA3HDGGRID,
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::default(),
         }
     }
 }
 
-impl DggrsPort for Isea3hImpl {
+impl DggrsApi for Igeo7Impl {
     fn zones_from_bbox(
         &self,
         refinement_level: RefinementLevel,
         bbox: Option<Rect<f64>>,
-        config: Option<DggrsPortConfig>,
+        config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
@@ -66,7 +67,7 @@ impl DggrsPort for Isea3hImpl {
             &cfg,
         );
 
-        let _ = isea3h_metafile(&meta_path);
+        let _ = igeo7_metafile(&meta_path);
 
         if let Some(bbox) = &bbox {
             let _ = common::write::bbox(bbox, &bbox_path);
@@ -104,7 +105,7 @@ impl DggrsPort for Isea3hImpl {
         &self,
         refinement_level: RefinementLevel,
         point: Point,
-        config: Option<DggrsPortConfig>,
+        config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
@@ -119,7 +120,7 @@ impl DggrsPort for Isea3hImpl {
             &cfg,
         );
 
-        let _ = isea3h_metafile(&meta_path);
+        let _ = igeo7_metafile(&meta_path);
 
         // Append to metafile
         let mut meta_file = OpenOptions::new()
@@ -164,13 +165,13 @@ impl DggrsPort for Isea3hImpl {
         &self,
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
-        config: Option<DggrsPortConfig>,
+        config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
 
-        let parent_zone_res = get_refinement_level_from_z3_zone_id(&parent_zone_id)?;
+        let parent_zone_res = get_refinement_level_from_z7_zone_id(&parent_zone_id)?;
         let target_level = parent_zone_res.add(relative_depth)?;
 
         let _ = common::write::metafile(
@@ -182,7 +183,7 @@ impl DggrsPort for Isea3hImpl {
             &cfg,
         );
 
-        let _ = isea3h_metafile(&meta_path);
+        let _ = igeo7_metafile(&meta_path);
 
         // Append to metafile format
         let mut meta_file = OpenOptions::new()
@@ -199,10 +200,12 @@ impl DggrsPort for Isea3hImpl {
             CLIP_CELL_DENSIFICATION
         );
         let _ = writeln!(meta_file, "clip_cell_addresses \"{}\"", parent_zone_id);
-        let _ = writeln!(meta_file, "input_address_type Z3");
+        let _ = writeln!(meta_file, "input_address_type Z7");
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
+
         let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
+
         common::cleanup(
             &meta_path,
             &aigen_path,
@@ -216,13 +219,13 @@ impl DggrsPort for Isea3hImpl {
     fn zone_from_id(
         &self,
         zone_id: ZoneId,
-        config: Option<DggrsPortConfig>,
+        config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
 
-        let refinement_level = get_refinement_level_from_z3_zone_id(&zone_id)?;
+        let refinement_level = get_refinement_level_from_z7_zone_id(&zone_id).unwrap();
         let _ = common::write::metafile(
             &meta_path,
             &refinement_level,
@@ -232,7 +235,7 @@ impl DggrsPort for Isea3hImpl {
             &cfg,
         );
 
-        let _ = isea3h_metafile(&meta_path);
+        let _ = igeo7_metafile(&meta_path);
 
         // Append to metafile format
         let mut meta_file = OpenOptions::new()
@@ -257,7 +260,7 @@ impl DggrsPort for Isea3hImpl {
         let _ = writeln!(input_file, "{}", zone_id).expect("Cannot create zone id input file");
 
         let _ = writeln!(meta_file, "dggrid_operation TRANSFORM_POINTS");
-        let _ = writeln!(meta_file, "input_address_type Z3");
+        let _ = writeln!(meta_file, "input_address_type Z7");
         common::write::file(meta_path.clone());
         common::dggrid::execute(&self.adapter.executable, &meta_path);
         let result = common::output::ingest(&aigen_path, &children_path, &neighbor_path, &cfg)?;
@@ -271,6 +274,7 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
+
     fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().min_refinement_level)
     }
@@ -292,7 +296,7 @@ impl DggrsPort for Isea3hImpl {
     }
 }
 
-pub fn isea3h_metafile(meta_path: &PathBuf) -> io::Result<()> {
+pub fn igeo7_metafile(meta_path: &PathBuf) -> io::Result<()> {
     debug!("Writing to {:?}", meta_path);
     // Append to metafile format
     let mut meta_file = OpenOptions::new()
@@ -300,58 +304,57 @@ pub fn isea3h_metafile(meta_path: &PathBuf) -> io::Result<()> {
         .write(true)
         .open(&meta_path)
         .expect("cannot open file");
-    writeln!(meta_file, "dggs_type {}", "ISEA3H")?;
-    writeln!(meta_file, "dggs_aperture 3")?;
-    writeln!(meta_file, "output_address_type Z3")?;
+    writeln!(meta_file, "dggs_type {}", "IGEO7")?;
+    writeln!(meta_file, "dggs_aperture 7")?;
+    writeln!(meta_file, "output_address_type Z7")?;
 
     Ok(())
 }
 
-/// Determines the refinement level from an ISEA3H (Z3) zone identifier.
+/// Determines the refinement level from an IGEO7 (Z7) zone identifier.
 ///
-/// This function decodes a Z3 zone identifier generated by DGGRID with `z3_invalid_digit` set to `3`. In the Z3 format, the first four bits of the 64-bit integer encode the base cell number, and the remaining 60 bits are split into 30 two-bit digits. Digits with values `0` through `2` represent valid resolution steps, while the value `3` indicates padding beyond the zone’s resolution.
-///
-/// The refinement level is calculated by counting the number of valid digits before the first padding digit. If no padding digit is found, the maximum refinement level of 30 is returned.
+/// This function interprets a Z7 zone identifier as defined by the Z7 indexing scheme, where the first four bits encode the base cell number and the remaining 60 bits are composed of 20 three-bit digits. Digits with values `0` through `6` represent valid resolution steps, while the value `7` indicates padding beyond the zone’s resolution. The refinement level is determined by counting the number of valid digits before the first padding digit. If no padding digit is found, the maximum refinement level of 20 is returned. See [IGEO7: A new hierarchically indexed hexagonal equal-area discrete global grid system ](https://doi.org/10.5194/agile-giss-6-32-2025) for more information.
 ///
 /// # Parameters
-/// - `dggrid_z3_id`: A `ZoneId` expected to be in hexadecimal form (`ZoneId::HexId`).
+/// - `dggrid_z7_id`: A `ZoneId` expected to be in hexadecimal form (`ZoneId::HexId`).
 ///
 /// # Returns
 /// - `Ok(RefinementLevel)`: The detected refinement level.
-/// - `Err(GeoPlegmaError)`: If the identifier is not a `HexId`, contains invalid digits, or fails to create a valid `RefinementLevel`.
+/// - `Err(DggrsError)`: If the identifier is not a `HexId`, contains invalid digits, or fails to create a valid `RefinementLevel`.
 ///
 /// # Panics
-/// This function will panic if the provided hex string cannot be parsed into a `u64`, though this is not expected when IDs are generated by DGGRID with the proper configuration.
+/// This function will panic if the provided hex string cannot be parsed into a `u64`, though this is not expected when IDs are generated by DGGRID.
 ///
 /// # Requirements
-/// Zone identifiers must be generated using DGGRID version 8.41 or later, with `z3_invalid_digit` explicitly set to `3`.
-pub fn get_refinement_level_from_z3_zone_id(
-    dggrid_z3_id: &ZoneId,
+/// Zone identifiers must be generated using DGGRID version 8.41 or later to ensure compatibility with the Z7 format.
+pub fn get_refinement_level_from_z7_zone_id(
+    dggrid_z7_id: &ZoneId,
 ) -> Result<RefinementLevel, DggrsError> {
-    // make sure to generate zones with DGGRID version 8.41 and z3_invalid_digit 3
-    let hex = match dggrid_z3_id {
+    // make sure to generate zones with DGGRID version 8.41
+    let hex = match dggrid_z7_id {
         ZoneId::HexId(h) => h.as_str(),
         _ => {
-            return Err(DggrsError::Dggrid(DggridError::InvalidZ3Format(
+            return Err(DggrsError::Dggrid(DggridError::InvalidZ7Format(
                 "Expected ZoneId::HexId".to_string(),
             )))?;
         }
     };
 
     let v = u64::from_str_radix(hex, 16).unwrap(); // NOTE: This should be safe if the hex string is coming from DGGRID.
-    let mut resolution = RefinementLevel::new(30)?; // default if no padding found
-    for i in 0..30 {
-        let shift = 60 - 2 * (i + 1);
-        let digit = ((v >> shift) & 0b11) as u64;
 
-        if digit > 3 {
-            return Err(DggrsError::Dggrid(DggridError::InvalidZ3Format(format!(
-                "Invalid Z3 digit {} at position {}",
+    let mut resolution = RefinementLevel::new(20)?;
+    for i in 0..20 {
+        let shift = 60 - 3 * (i + 1);
+        let digit = ((v >> shift) & 0b111) as u8;
+
+        if digit > 7 {
+            return Err(DggrsError::Dggrid(DggridError::InvalidZ7Format(format!(
+                "Invalid Z7 digit {} at position {}",
                 digit,
                 i + 1
             ))));
         }
-        if digit == 3 {
+        if digit == 7 {
             resolution = RefinementLevel::new(i)?;
             break;
         }
