@@ -7,19 +7,15 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::models::common::DggrsUid;
+use crate::models::common::{DggrsTool, DggrsUid};
 use std::fmt;
 use thiserror::Error;
-
-use crate::models::common::{DggrsTool, DggrsUid};
 
 /// Error type for instantiating DggrsPort adapters via the factory.
 #[derive(Debug, Error)]
 pub enum FactoryError {
-    #[error("Unsupported combination: tool='{tool}', dggrs='{id}'")]
-    UnsupportedCombination { tool: DggrsTool, id: DggrsUid },
-    #[error("DGGRS ID {id} is not available")]
-    AdapterUnavailable { id: DggrsUid },
+    #[error("Invalid DGGRS UID error: {0}")]
+    InvalidDggrsUidError(#[from] DggrsUidError),
 }
 
 #[derive(Debug)]

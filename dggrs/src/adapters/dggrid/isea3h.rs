@@ -9,8 +9,8 @@
 
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
+use crate::error::DggrsError;
 use crate::error::dggrid::DggridError;
-use crate::error::port::GeoPlegmaError;
 use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
@@ -271,23 +271,23 @@ impl DggrsPort for Isea3hImpl {
         );
         Ok(result)
     }
-    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().min_refinement_level)
     }
 
-    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn max_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().max_refinement_level)
     }
 
-    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn default_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().default_refinement_level)
     }
 
-    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn max_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().max_relative_depth)
     }
 
-    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn default_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().default_relative_depth)
     }
 }

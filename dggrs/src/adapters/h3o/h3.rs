@@ -9,8 +9,8 @@
 
 use crate::adapters::h3o::common::{refinement_level_to_h3_resolution, to_zones};
 use crate::adapters::h3o::h3o::H3oAdapter;
+use crate::error::DggrsError;
 use crate::error::h3o::H3oError;
-use crate::error::port::GeoPlegmaError;
 use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use geo::{Point, Rect};
@@ -62,7 +62,7 @@ impl DggrsPort for H3Impl {
             h3o_zones = tiler.into_coverage().collect::<Vec<_>>();
         } else {
             if refinement_level > self.default_refinement_level()? {
-                return Err(GeoPlegmaError::RefinementLevelTooHigh(refinement_level));
+                return Err(DggrsError::RefinementLevelTooHigh(refinement_level));
             }
             h3o_zones = CellIndex::base_cells()
                 .flat_map(|base| {
@@ -105,13 +105,11 @@ impl DggrsPort for H3Impl {
         let target_level = RefinementLevel::new(parent.resolution() as i32)?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
-            return Err(
-                GeoPlegmaError::RefinementLevelPlusRelativeDepthLimitReached {
-                    grid_name: self.id.spec().name.to_string(),
-                    requested: relative_depth,
-                    maximum: self.max_refinement_level()?,
-                },
-            );
+            return Err(DggrsError::RefinementLevelPlusRelativeDepthLimitReached {
+                grid_name: self.id.spec().name.to_string(),
+                requested: relative_depth,
+                maximum: self.max_refinement_level()?,
+            });
         }
 
         let h3o_sub_zones: Vec<CellIndex> = parent
@@ -136,23 +134,23 @@ impl DggrsPort for H3Impl {
         Ok(to_zones(vec![h3o_zone], cfg)?)
     }
 
-    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().min_refinement_level)
     }
 
-    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn max_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().max_refinement_level)
     }
 
-    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
+    fn default_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
         Ok(self.id.spec().default_refinement_level)
     }
 
-    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn max_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().max_relative_depth)
     }
 
-    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
+    fn default_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
         Ok(self.id.spec().default_relative_depth)
     }
 }

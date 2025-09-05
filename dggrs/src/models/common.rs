@@ -7,7 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 use crate::constants::DGGRS_SPECS;
-use crate::error::port::GeoPlegmaError;
+use crate::error::DggrsError;
 use geo::{Point, Polygon};
 use std::convert::{From, TryFrom};
 use std::fmt;
@@ -323,7 +323,7 @@ impl TryFrom<RefinementLevel> for u8 {
     type Error = DggrsError;
 
     fn try_from(d: RefinementLevel) -> Result<Self, Self::Error> {
-        u8::try_from(d.0).map_err(|_| GeoPlegmaError::RefinementLevelTooHigh(d))
+        u8::try_from(d.0).map_err(|_| DggrsError::RefinementLevelTooHigh(d))
     }
 }
 
