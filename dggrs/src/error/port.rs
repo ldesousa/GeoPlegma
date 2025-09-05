@@ -7,6 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use crate::error::FactoryError;
 use crate::error::dggal::DggalError;
 use crate::error::dggrid::DggridError;
 use crate::error::h3o::H3oError;
@@ -15,7 +16,10 @@ use std::num::ParseFloatError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum GeoPlegmaError {
+pub enum DggrsError {
+    #[error("Factory error: {0}")]
+    Factory(#[from] FactoryError),
+
     #[error("DGGAL error: {0}")]
     Dggal(#[from] DggalError),
 
@@ -35,7 +39,7 @@ pub enum GeoPlegmaError {
     UnsupportedCombo { tool: String, grid: String },
 
     #[error("Requested depth {requested} exceeds maximum allowed {maximum} for grid '{grid_name}'")]
-    DepthLimitReached {
+    RefinementLevelLimitReached {
         grid_name: String,
         requested: RefinementLevel,
         maximum: RefinementLevel,
@@ -60,7 +64,7 @@ pub enum GeoPlegmaError {
     },
 
     #[error("Depth too large to convert to u8: {0}")]
-    DepthTooLarge(RefinementLevel),
+    RefinementLevelTooHigh(RefinementLevel),
 
     #[error("Relative depth too large to convert to u8: {0}")]
     RelativeDepthTooLarge(RelativeDepth),

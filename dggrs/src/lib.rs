@@ -16,5 +16,5 @@ pub mod models;
 pub mod ports;
 
 /// This is the only re-export that is needed.
-pub use factory::dggrs_factory::get;
+pub use factory::{get, registry};
 pub use ports::dggrs::DggrsPortConfig as config;

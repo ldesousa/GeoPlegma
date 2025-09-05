@@ -10,8 +10,8 @@
 use crate::adapters::dggrid::common;
 use crate::adapters::dggrid::dggrid::DggridAdapter;
 use crate::error::dggrid::DggridError;
-use crate::error::port::GeoPlegmaError;
-use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::error::DggrsError;
+use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use core::f64;
 use geo::geometry::Point;
@@ -24,13 +24,15 @@ pub const CLIP_CELL_DENSIFICATION: u8 = 50; // DGGRID option
 use geo::Rect;
 
 pub struct Igeo7Impl {
-    pub adapter: DggridAdapter,
+    id: DggrsUid,
+    adapter: DggridAdapter,
 }
 
 impl Igeo7Impl {
     // Optional: allow custom paths too
     pub fn new(executable: PathBuf, workdir: PathBuf) -> Self {
         Self {
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::new(executable, workdir),
         }
     }
@@ -39,6 +41,7 @@ impl Igeo7Impl {
 impl Default for Igeo7Impl {
     fn default() -> Self {
         Self {
+            id: DggrsUid::IGEO7,
             adapter: DggridAdapter::default(),
         }
     }
@@ -50,9 +53,9 @@ impl DggrsPort for Igeo7Impl {
         refinement_level: RefinementLevel,
         bbox: Option<Rect<f64>>,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
-        let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
+        let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
 
         let _ = common::write::metafile(
@@ -93,6 +96,7 @@ impl DggrsPort for Igeo7Impl {
             &children_path,
             &neighbor_path,
             &bbox_path,
+            &input_path,
         );
         Ok(result)
     }
@@ -102,7 +106,7 @@ impl DggrsPort for Igeo7Impl {
         refinement_level: RefinementLevel,
         point: Point,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
@@ -152,6 +156,7 @@ impl DggrsPort for Igeo7Impl {
             &children_path,
             &neighbor_path,
             &bbox_path,
+            &input_path,
         );
         let _ = fs::remove_file(&input_path);
         Ok(result)
@@ -161,9 +166,9 @@ impl DggrsPort for Igeo7Impl {
         relative_depth: RelativeDepth,
         parent_zone_id: ZoneId,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
-        let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, _input_path) =
+        let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
 
         let parent_zone_res = get_refinement_level_from_z7_zone_id(&parent_zone_id)?;
@@ -207,6 +212,7 @@ impl DggrsPort for Igeo7Impl {
             &children_path,
             &neighbor_path,
             &bbox_path,
+            &input_path,
         );
         Ok(result)
     }
@@ -214,7 +220,7 @@ impl DggrsPort for Igeo7Impl {
         &self,
         zone_id: ZoneId,
         config: Option<DggrsPortConfig>,
-    ) -> Result<Zones, GeoPlegmaError> {
+    ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         let (meta_path, aigen_path, children_path, neighbor_path, bbox_path, input_path) =
             common::dggrid::setup(&self.adapter.workdir);
@@ -264,28 +270,29 @@ impl DggrsPort for Igeo7Impl {
             &children_path,
             &neighbor_path,
             &bbox_path,
+            &input_path,
         );
         Ok(result)
     }
 
-    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(0)?)
+    fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+        Ok(self.id.spec().min_refinement_level)
     }
 
-    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(18)?)
+    fn max_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+        Ok(self.id.spec().max_refinement_level)
     }
 
-    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(2)?)
+    fn default_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+        Ok(self.id.spec().default_refinement_level)
     }
 
-    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        Ok(RelativeDepth::new(3)?)
+    fn max_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
+        Ok(self.id.spec().max_relative_depth)
     }
 
-    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        Ok(RelativeDepth::new(1)?)
+    fn default_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
+        Ok(self.id.spec().default_relative_depth)
     }
 }
 
@@ -322,12 +329,12 @@ pub fn igeo7_metafile(meta_path: &PathBuf) -> io::Result<()> {
 /// Zone identifiers must be generated using DGGRID version 8.41 or later to ensure compatibility with the Z7 format.
 pub fn get_refinement_level_from_z7_zone_id(
     dggrid_z7_id: &ZoneId,
-) -> Result<RefinementLevel, GeoPlegmaError> {
+) -> Result<RefinementLevel, DggrsError> {
     // make sure to generate zones with DGGRID version 8.41
     let hex = match dggrid_z7_id {
         ZoneId::HexId(h) => h.as_str(),
         _ => {
-            return Err(GeoPlegmaError::Dggrid(DggridError::InvalidZ7Format(
+            return Err(DggrsError::Dggrid(DggridError::InvalidZ7Format(
                 "Expected ZoneId::HexId".to_string(),
             )))?;
         }
@@ -341,9 +348,11 @@ pub fn get_refinement_level_from_z7_zone_id(
         let digit = ((v >> shift) & 0b111) as u8;
 
         if digit > 7 {
-            return Err(GeoPlegmaError::Dggrid(DggridError::InvalidZ7Format(
-                format!("Invalid Z7 digit {} at position {}", digit, i + 1),
-            )));
+            return Err(DggrsError::Dggrid(DggridError::InvalidZ7Format(format!(
+                "Invalid Z7 digit {} at position {}",
+                digit,
+                i + 1
+            ))));
         }
         if digit == 7 {
             resolution = RefinementLevel::new(i)?;

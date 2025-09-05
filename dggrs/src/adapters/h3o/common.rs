@@ -8,7 +8,7 @@
 // except according to those terms.
 
 use crate::{
-    error::{h3o::H3oError, port::GeoPlegmaError},
+    error::{h3o::H3oError, DggrsError},
     models::common::{RefinementLevel, Zone, ZoneId, Zones},
     ports::dggrs::DggrsPortConfig,
 };
@@ -18,9 +18,9 @@ use h3o::{Boundary, CellIndex, LatLng, Resolution};
 /// Translates integer resolution to H3 string resolution
 pub fn refinement_level_to_h3_resolution(
     refinement_level: RefinementLevel,
-) -> Result<Resolution, GeoPlegmaError> {
+) -> Result<Resolution, DggrsError> {
     Resolution::try_from(refinement_level.get()).map_err(|e| {
-        GeoPlegmaError::H3o(H3oError::CannotTranslateToH3Resolution {
+        DggrsError::H3o(H3oError::CannotTranslateToH3Resolution {
             rf: refinement_level.to_string(),
             source: e,
         })
@@ -59,7 +59,7 @@ pub fn latlng_to_point(latlng: LatLng) -> Point {
     Point::new(latlng.lng(), latlng.lat())
 }
 
-pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zones, GeoPlegmaError> {
+pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zones, DggrsError> {
     let zones: Vec<Zone> = h3o_zones
         .into_iter()
         .map(|h3o_zone| {
@@ -92,6 +92,7 @@ pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zone
             };
 
             let children = if conf.children {
+                //FIX: don't prodcuce any children if max_refinement_level has been reached
                 let chr_res = h3o_zone
                     .resolution()
                     .succ() // NOTE: succ() returns an Option, therefore we can use ok_or_else in the next line and not map_err
@@ -129,7 +130,7 @@ pub fn to_zones(h3o_zones: Vec<CellIndex>, conf: DggrsPortConfig) -> Result<Zone
                 area_sqm,
             })
         })
-        .collect::<Result<Vec<Zone>, GeoPlegmaError>>()?;
+        .collect::<Result<Vec<Zone>, DggrsError>>()?;
 
     Ok(Zones { zones })
 }
