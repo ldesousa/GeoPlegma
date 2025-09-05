@@ -12,6 +12,7 @@ use crate::adapters::dggal::context::GLOBAL_DGGAL;
 use crate::constants::whole_earth_bbox;
 use crate::error::DggrsError;
 use crate::error::dggal::DggalError;
+use crate::error::port::GeoPlegmaError;
 use crate::models::common::{DggrsName, DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use dggal::DGGRS;
@@ -49,7 +50,7 @@ impl DggrsPort for DggalImpl {
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
         if refinement_level > self.max_refinement_level()? {
-            return Err(DggrsError::RefinementLevelLimitReached {
+            return Err(GeoPlegmaError::RefinementLevelLimitReached {
                 grid_name: self.grid_name().to_string(),
                 requested: refinement_level,
                 maximum: self.max_refinement_level()?,
@@ -93,7 +94,7 @@ impl DggrsPort for DggalImpl {
         })?;
 
         if relative_depth > self.max_relative_depth()? {
-            return Err(DggrsError::RelativeDepthLimitReached {
+            return Err(GeoPlegmaError::RelativeDepthLimitReached {
                 grid_name: self.grid_name().to_string(),
                 requested: relative_depth,
                 maximum: self.max_relative_depth()?,
@@ -106,11 +107,13 @@ impl DggrsPort for DggalImpl {
             RefinementLevel::new(dggrs.getZoneLevel(parent_u64))?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
-            return Err(DggrsError::RefinementLevelPlusRelativeDepthLimitReached {
-                grid_name: self.grid_name().to_string(),
-                requested: relative_depth,
-                maximum: self.max_refinement_level()?,
-            });
+            return Err(
+                GeoPlegmaError::RefinementLevelPlusRelativeDepthLimitReached {
+                    grid_name: self.grid_name().to_string(),
+                    requested: relative_depth,
+                    maximum: self.max_refinement_level()?,
+                },
+            );
         };
 
         let zones = dggrs.getSubZones(parent_u64, i32::from(relative_depth));
@@ -135,23 +138,23 @@ impl DggrsPort for DggalImpl {
         Ok(to_zones(dggrs, zones, cfg)?)
     }
 
-    fn min_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+    fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
         Ok(self.id.spec().min_refinement_level)
     }
 
-    fn max_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+    fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
         Ok(self.id.spec().max_refinement_level)
     }
 
-    fn default_refinement_level(&self) -> Result<RefinementLevel, DggrsError> {
+    fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
         Ok(self.id.spec().default_refinement_level)
     }
 
-    fn max_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
+    fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         Ok(self.id.spec().max_relative_depth)
     }
 
-    fn default_relative_depth(&self) -> Result<RelativeDepth, DggrsError> {
+    fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
         Ok(self.id.spec().default_relative_depth)
     }
 }

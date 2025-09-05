@@ -7,9 +7,7 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 use crate::constants::DGGRS_SPECS;
-use crate::error::DggrsError;
-use crate::error::factory::DggrsUidError;
-use crate::registry;
+use crate::error::port::GeoPlegmaError;
 use geo::{Point, Polygon};
 use std::convert::{From, TryFrom};
 use std::fmt;
@@ -67,34 +65,6 @@ impl fmt::Display for DggrsUid {
         f.write_str(s)
     }
 }
-
-impl FromStr for DggrsUid {
-    type Err = DggrsUidError; // or FactoryError if you prefer
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let normalized: String = s
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .map(|c| c.to_ascii_uppercase())
-            .collect();
-
-        if let Some(hit) = registry()
-            .iter()
-            .map(|sp| sp.id)
-            .find(|id| id.to_string() == normalized)
-        {
-            return Ok(hit);
-        }
-
-        // Unknown: suggest all known UIDs
-        let candidates = registry().iter().map(|sp| sp.id).collect();
-        Err(DggrsUidError::Unknown {
-            input: s.to_string(),
-            candidates,
-        })
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DggrsName {
     ISEA3H,
@@ -147,10 +117,6 @@ pub struct DggrsSpec {
     pub id: DggrsUid,
     pub name: DggrsName,
     pub tool: DggrsTool,
-    pub title: Option<&'static str>,
-    pub description: Option<&'static str>,
-    pub uri: Option<&'static str>, // NOTE: Adjust this to only accept this format [ogc-dggrs:ISEA3H]"
-    pub crs: Option<i32>,
     pub min_refinement_level: RefinementLevel,
     pub max_refinement_level: RefinementLevel,
     pub default_refinement_level: RefinementLevel,
@@ -357,7 +323,7 @@ impl TryFrom<RefinementLevel> for u8 {
     type Error = DggrsError;
 
     fn try_from(d: RefinementLevel) -> Result<Self, Self::Error> {
-        u8::try_from(d.0).map_err(|_| DggrsError::RefinementLevelTooHigh(d))
+        u8::try_from(d.0).map_err(|_| GeoPlegmaError::RefinementLevelTooHigh(d))
     }
 }
 
