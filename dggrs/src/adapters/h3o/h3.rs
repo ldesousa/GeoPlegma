@@ -11,22 +11,22 @@ use crate::adapters::h3o::common::{refinement_level_to_h3_resolution, to_zones};
 use crate::adapters::h3o::h3o::H3oAdapter;
 use crate::error::h3o::H3oError;
 use crate::error::port::GeoPlegmaError;
-use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
+use crate::models::common::{DggrsUid, RefinementLevel, RelativeDepth, ZoneId, Zones};
 use crate::ports::dggrs::{DggrsPort, DggrsPortConfig};
 use geo::{Point, Rect};
 use h3o::geom::{ContainmentMode, TilerBuilder};
 use h3o::{CellIndex, LatLng};
 use std::str::FromStr;
 
-pub const MAX_DEPTH: u8 = 10;
-
 pub struct H3Impl {
-    pub adapter: H3oAdapter,
+    id: DggrsUid,
+    adapter: H3oAdapter,
 }
 
 impl H3Impl {
     pub fn new() -> Self {
         Self {
+            id: DggrsUid::H3,
             adapter: H3oAdapter::new(),
         }
     }
@@ -35,6 +35,7 @@ impl H3Impl {
 impl Default for H3Impl {
     fn default() -> Self {
         Self {
+            id: DggrsUid::H3,
             adapter: H3oAdapter::default(),
         }
     }
@@ -61,7 +62,7 @@ impl DggrsPort for H3Impl {
             h3o_zones = tiler.into_coverage().collect::<Vec<_>>();
         } else {
             if refinement_level > self.default_refinement_level()? {
-                return Err(GeoPlegmaError::DepthTooLarge(refinement_level));
+                return Err(GeoPlegmaError::RefinementLevelTooHigh(refinement_level));
             }
             h3o_zones = CellIndex::base_cells()
                 .flat_map(|base| {
@@ -104,9 +105,13 @@ impl DggrsPort for H3Impl {
         let target_level = RefinementLevel::new(parent.resolution() as i32)?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
-            return Err(GeoPlegmaError::H3o(H3oError::ResolutionLimitReached {
-                zone_id: parent.to_string(),
-            }));
+            return Err(
+                GeoPlegmaError::RefinementLevelPlusRelativeDepthLimitReached {
+                    grid_name: self.id.spec().name.to_string(),
+                    requested: relative_depth,
+                    maximum: self.max_refinement_level()?,
+                },
+            );
         }
 
         let h3o_sub_zones: Vec<CellIndex> = parent
@@ -132,22 +137,22 @@ impl DggrsPort for H3Impl {
     }
 
     fn min_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(0)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
+        Ok(self.id.spec().min_refinement_level)
     }
 
     fn max_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(15)?) //NOTE: This is hardcoded from the Resolution Enum https://docs.rs/h3o/latest/h3o/enum.Resolution.html
+        Ok(self.id.spec().max_refinement_level)
     }
 
     fn default_refinement_level(&self) -> Result<RefinementLevel, GeoPlegmaError> {
-        Ok(RefinementLevel::new(1)?)
+        Ok(self.id.spec().default_refinement_level)
     }
 
     fn max_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        Ok(RelativeDepth::new(2)?)
+        Ok(self.id.spec().max_relative_depth)
     }
 
     fn default_relative_depth(&self) -> Result<RelativeDepth, GeoPlegmaError> {
-        Ok(RelativeDepth::new(1)?)
+        Ok(self.id.spec().default_relative_depth)
     }
 }
