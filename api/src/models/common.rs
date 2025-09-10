@@ -54,23 +54,14 @@ impl FromStr for DggrsUid {
     type Err = DggrsUidError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let norm = input.trim().to_ascii_lowercase().replace('_', "-");
+        let needle = input.trim();
 
         for spec in DGGRS_SPECS.iter() {
-            // 1. canonical form: NAME-TOOL
-            let canonical = format!("{}{}", spec.name, spec.tool).to_ascii_lowercase();
-            if norm == canonical {
-                return Ok(spec.id);
-            }
-
-            // 2. short form: just the name (works if unambiguous)
-            let short = spec.name.to_string().to_ascii_lowercase();
-            if norm == short {
+            if needle == spec.id.to_string() {
                 return Ok(spec.id);
             }
         }
 
-        // fallthrough: build candidates straight from specs
         let candidates = DGGRS_SPECS.iter().map(|s| s.id).collect();
         Err(DggrsUidError::Unknown {
             input: input.to_string(),
@@ -81,14 +72,7 @@ impl FromStr for DggrsUid {
 
 impl fmt::Display for DggrsUid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let spec = self.spec();
-
-        // Policy: print `name-tool` if tool != Native, else just name.
-        // You can adjust (e.g. special-case H3/IGEO7) as needed.
-        match spec.tool {
-            DggrsImplementation::Native => write!(f, "{}", spec.name),
-            _ => write!(f, "{}{}", spec.name, spec.tool),
-        }
+        fmt::Debug::fmt(self, f)
     }
 }
 
