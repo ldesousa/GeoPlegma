@@ -56,41 +56,27 @@ level = 3
 denom = pow(aperture,level-1)
 odd = 0
 
-# loop columns
-for top in range (0,int(denom)+1,aperture):
-    # differenciate odd from even
-    odd = odd % 2
-    i_array = []
-    j_step = 0
-    j_array = []
-    print("\n === top:%s ===" % (str(top)))
-    # loop rows
-    for i in range (0,top+1,2):
-        i_array.append(i + odd)
-        j_array.append(int(denom - top + j_step))
-        j_step = j_step + 1
-    
-    # collect values from array and plot
-    j_array = list(reversed(j_array))
-    for x in range(0,len(i_array)):
-        
-        print("%s;%s" % (str(i_array[x]),str(j_array[x])))
+num_hops = denom // level + 1
+
+for row in range(0,int(denom+1)):
+    col_start = row % level
+    print("\n========= row:%s, start:%s, hops:%s" % (str(row),str(col_start),int(num_hops)))
+    for col in range(0,int(num_hops)):
+        j = (col_start + (col*level))
+        print("%s;%s" % (row, j))
         cartesian_point = barycentric_to_cartesian(
                           a, b, c, 
-                          (i_array[x]/denom), 
-                          (j_array[x]/denom), 
-                          ((denom - i_array[x] - j_array[x])/denom))
+                          (row/denom), 
+                          (j/denom), 
+                          ((denom - row - j)/denom))
         plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color="orange")
-        cartesian_point = barycentric_to_cartesian(
-                          a, b, c, 
-                          (i_array[x]/denom), 
-                          ((denom - i_array[x] - j_array[x])/denom),
-                          (j_array[x]/denom))
-        plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color="orange")
-    
-    odd = odd + 1
+                 markersize=12, color="orange")
+
+    if ((row+1) % level) == 0:
+        num_hops = num_hops + 1
+    else:
+        num_hops = num_hops - 1
+
 
 ############# Test for Level 2 #############
 aperture = 3
@@ -107,7 +93,7 @@ for row in range(0,int(denom+1)):
                           (col/denom), 
                           ((denom - row - col)/denom))
         plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color="magenta")
+                 color="blue")
         
 
 plt.show()
