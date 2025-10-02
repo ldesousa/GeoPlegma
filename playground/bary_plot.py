@@ -50,11 +50,11 @@ u, v, w = (1.0/3), (1.0/3), (1.0/3)
 cartesian_point = barycentric_to_cartesian(a, b, c, u, v, w)
 plt.plot(cartesian_point[0], cartesian_point[1], marker='o')  # Optional: add markers at point
 
+############# Test for Level 3 #############
 aperture = 3
-level = 2
-denom = pow(aperture,level)
+level = 3
+denom = pow(aperture,level-1)
 odd = 0
-colours = ["red", "green", "blue", "yellow", "cyan", "magenta"]
 
 # loop columns
 for top in range (0,int(denom)+1,aperture):
@@ -69,7 +69,7 @@ for top in range (0,int(denom)+1,aperture):
         i_array.append(i + odd)
         j_array.append(int(denom - top + j_step))
         j_step = j_step + 1
-
+    
     # collect values from array and plot
     j_array = list(reversed(j_array))
     for x in range(0,len(i_array)):
@@ -81,15 +81,33 @@ for top in range (0,int(denom)+1,aperture):
                           (j_array[x]/denom), 
                           ((denom - i_array[x] - j_array[x])/denom))
         plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color=colours[int(top/aperture)])
+                 color="orange")
         cartesian_point = barycentric_to_cartesian(
                           a, b, c, 
                           (i_array[x]/denom), 
                           ((denom - i_array[x] - j_array[x])/denom),
                           (j_array[x]/denom))
         plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color=colours[int(top/aperture)])
-
+                 color="orange")
+    
     odd = odd + 1
+
+############# Test for Level 2 #############
+aperture = 3
+level = 2
+denom = pow(aperture,level-1)
+
+for row in range(0,int(denom+1)):
+    print("\n=========")
+    for col in range(0,int(denom-row+1)):
+        print("%s;%s" % (row, col))
+        cartesian_point = barycentric_to_cartesian(
+                          a, b, c, 
+                          (row/denom), 
+                          (col/denom), 
+                          ((denom - row - col)/denom))
+        plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
+                 color="magenta")
+        
 
 plt.show()
