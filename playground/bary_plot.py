@@ -29,6 +29,24 @@ def barycentric_to_cartesian(a, b, c, u, v, w):
     return (x, y)
 
 
+def plot_even(aperture, level, colour):
+
+    #denom = pow(aperture,level-1)
+    denom = aperture * (level-1)
+    
+    for row in range(0,int(denom+1)):
+        print("\n=========")
+        for col in range(0,int(denom-row+1)):
+            print("%s;%s" % (row, col))
+            cartesian_point = barycentric_to_cartesian(
+                              a, b, c, 
+                              (row/denom), 
+                              (col/denom), 
+                              ((denom - row - col)/denom))
+            plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
+                     color=colour)
+
+            
 # Triangle vertices
 a = (0, 0)
 b = (100, 0)
@@ -52,8 +70,9 @@ plt.plot(cartesian_point[0], cartesian_point[1], marker='o')  # Optional: add ma
 
 ############# Test for Level 3 #############
 aperture = 3
-level = 3
-denom = pow(aperture,level-1)
+level = 5
+# denom = pow(aperture,level-1)
+denom = pow(aperture,2) * (level-2)
 odd = 0
 
 num_hops = denom // level + 1
@@ -78,22 +97,9 @@ for row in range(0,int(denom+1)):
         num_hops = num_hops - 1
 
 
-############# Test for Level 2 #############
-aperture = 3
-level = 2
-denom = pow(aperture,level-1)
-
-for row in range(0,int(denom+1)):
-    print("\n=========")
-    for col in range(0,int(denom-row+1)):
-        print("%s;%s" % (row, col))
-        cartesian_point = barycentric_to_cartesian(
-                          a, b, c, 
-                          (row/denom), 
-                          (col/denom), 
-                          ((denom - row - col)/denom))
-        plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                 color="blue")
+############# Test for Even level #############
+plot_even(3, 4, "magenta")
+plot_even(3, 2, "blue")
         
 
 plt.show()
