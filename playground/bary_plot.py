@@ -68,9 +68,30 @@ u, v, w = (1.0/3), (1.0/3), (1.0/3)
 cartesian_point = barycentric_to_cartesian(a, b, c, u, v, w)
 plt.plot(cartesian_point[0], cartesian_point[1], marker='o')  # Optional: add markers at point
 
-############# Test for Level 3 #############
+
 aperture = 3
-level = 5
+
+############# Level 5 lines ###################
+
+level = 3
+nlines = int(pow(aperture,2) * pow(2,(level-aperture)/2) )
+
+for i in range(1,nlines):
+    bcA = barycentric_to_cartesian(a,b,c,i/nlines,0,     1-i/nlines)
+    bcB = barycentric_to_cartesian(a,b,c,i/nlines,1-i/nlines,0)
+    plt.plot([bcA[0],bcB[0]],[bcA[1],bcB[1]], markersize=1, color="grey")
+  
+    bcA = barycentric_to_cartesian(a,b,c,0,     1-i/nlines,i/nlines)
+    bcB = barycentric_to_cartesian(a,b,c,1-i/nlines,0,     i/nlines)
+    plt.plot([bcA[0],bcB[0]],[bcA[1],bcB[1]], markersize=1, color="grey")
+  
+    bcA = barycentric_to_cartesian(a,b,c,0,     i/nlines,1-i/nlines)
+    bcB = barycentric_to_cartesian(a,b,c,1-i/nlines,i/nlines,0)
+    plt.plot([bcA[0],bcB[0]],[bcA[1],bcB[1]], markersize=1, color="grey")
+
+        
+############# Test for Level 3 #############
+level = 3
 # denom = pow(aperture,level-1)
 denom = pow(aperture,2) * (level-2)
 odd = 0
@@ -100,6 +121,5 @@ for row in range(0,int(denom+1)):
 ############# Test for Even level #############
 plot_even(3, 4, "magenta")
 plot_even(3, 2, "blue")
-        
 
 plt.show()
