@@ -29,6 +29,19 @@ def barycentric_to_cartesian(a, b, c, u, v, w):
     return (x, y)
 
 
+def denominator_even(aperture, level):
+
+    print("level:%s aperture:%s" % (level, aperture))
+    if level < 3:
+        return 3
+    return int(pow(aperture,2) * pow(2,(level-aperture-1)/2))
+
+
+def denominator_odd(aperture, level):
+
+    return int(pow(aperture,2) * pow(2,(level-aperture)/2))
+
+
 def plot_even(a, b, c, aperture, level, colour):
 
     #denom = pow(aperture,level-1)
@@ -45,33 +58,94 @@ def plot_even(a, b, c, aperture, level, colour):
                               ((denom - row - col)/denom))
             plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
                      color=colour)
+            #plot_even_cell(a,b,c,aperture,level,colour,row,col)
+            
+
+def plot_even_cell(a, b, c, aperture, level, colour, i, j):
+
+    vec_i = [2,1,-1,-2,-1,1]
+    vec_j = [-1,1,2,1,-1,-2]
+
+    denom = denominator_even(aperture,level)
+    #denom = 3
+    next_denom = denominator_odd(aperture,level+1)
+    print("denom: %s" % (str(denom)))
+    print("next_denom: %s" % (str(next_denom)))
+    
+    next_i = next_denom * i / denom
+    next_j = next_denom * j / denom
+    print("next_i:%s next_j:%s" % (next_i, next_j))
+
+    vec_i = [x + next_i for x in vec_i] 
+    vec_j = [x + next_j for x in vec_j] 
+    print("Vec i: %s" % (str(vec_i)))
+    print("Vec j: %s" % (str(vec_j)))
+
+    cartesians_x = []
+    cartesians_y = []
+    for x in range (len(vec_i)):
+        cartesian_point = barycentric_to_cartesian(
+                              a, b, c, 
+                              (vec_i[x]/next_denom), 
+                              (vec_j[x]/next_denom), 
+                              ((next_denom - vec_i[x] - vec_j[x])/next_denom))
+        cartesians_x.append(cartesian_point[0])
+        cartesians_y.append(cartesian_point[1])
+        print("Bary coords: %s; %s; %s (over %s)" % (vec_i[x] ,vec_j[x] ,str(next_denom - vec_i[x] - vec_j[x]), next_denom))
+
+    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed')
+
+
+def plot_odd_cell(a, b, c, aperture, level, colour, i, j):
+
+    vec_i = [1,0,-1,-1,0,1]
+    vec_j = [0,1,1,0,-1,-1]
+
+    denom = denominator_odd(aperture,level)
+#    print("denom: %s" % (str(denom)))
+    #print("next_denom: %s" % (str(next_denom)))
+    
+    vec_i = [x + i for x in vec_i] 
+    vec_j = [x + j for x in vec_j] 
+
+ #   print("Vec i: %s" % (str(vec_i)))
+  #  print("Vec j: %s" % (str(vec_j)))
+
+    cartesians_x = []
+    cartesians_y = []
+    for x in range (len(vec_i)):
+        cartesian_point = barycentric_to_cartesian(
+                              a, b, c, 
+                              (vec_i[x]/denom), 
+                              (vec_j[x]/denom), 
+                              ((denom - vec_i[x] - vec_j[x])/denom))
+   #     print("Bary coords: %s; %s; %s" % (str(vec_i[x]/denom),str(vec_j[x]/denom),str((denom - vec_i[x] - vec_j[x])/denom)))
+        cartesians_x.append(cartesian_point[0])
+        cartesians_y.append(cartesian_point[1])
+    #print("cartesians_x: %s" % (str(cartesians_x)))
+    #print("cartesians_y: %s" % (str(cartesians_y)))
+
+    cartesians_x.append(cartesians_x[0])
+    cartesians_y.append(cartesians_y[0])
+
+    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed')
+
 
 
 def plot_odd(a, b, c, aperture, level, colour):
-    # denom = pow(aperture,level-1)
-    denom = pow(aperture,2) * (level-2)
-    odd = 0
     
-    num_hops = denom // level + 1
+    denom = denominator_odd(aperture, level)
     
-    for row in range(0,int(denom+1)):
-        col_start = row % level
-        print("\n========= row:%s, start:%s, hops:%s" % (str(row),str(col_start),int(num_hops)))
-        for col in range(0,int(num_hops)):
-            j = (col_start + (col*level))
-            print("%s;%s" % (row, j))
-            cartesian_point = barycentric_to_cartesian(
-                              a, b, c, 
-                              (row/denom), 
-                              (j/denom), 
-                              ((denom - row - j)/denom))
-            plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
-                     markersize=12, color="orange")
-    
-        if ((row+1) % level) == 0:
-            num_hops = num_hops + 1
-        else:
-            num_hops = num_hops - 1
+    for i in range(denom+1):
+        start = i % level
+        for j in range(start,denom+1-i,3):
+                cartesian_point = barycentric_to_cartesian(
+                                  a, b, c, 
+                                  (i/denom), 
+                                  (j/denom), 
+                                  ((denom - i - j)/denom))
+                plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
+                         markersize=9, color=colour)
 
 
 def plot_lines(a, b, c, aperture, level):
@@ -118,16 +192,70 @@ aperture = 3
 ############# Level lines ###################
 
 level = 3
-plot_lines(a, b, c, aperture, level)
+#plot_lines(a, b, c, aperture, level)
 
+
+############# Plot Cells ####################
+
+#plot_even_cell(a, b, c, aperture, 2, "blue", 0, 0)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 0, 1)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 0, 2)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 0, 3)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 1, 0)
+plot_even_cell(a, b, c, aperture, 2, "blue", 1, 1)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 1, 2)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 2, 0)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 2, 1)
+#plot_even_cell(a, b, c, aperture, 2, "blue", 3, 0)
+
+plot_even_cell(a, b, c, aperture, 4, "magenta", 1, 0)
+
+
+
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 3, 3)
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 4, 1)
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 1, 4)
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 5, 2)
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 2, 5)
+
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 0, 0)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 0, 3)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 0, 6)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 0, 9)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 1, 1)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 1, 4)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 1, 7)
+
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 2, 2)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 2, 5)
+#plot_odd_cell(a,b,c, aperture, 3, "orange", 2, 8)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 3, 0)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 3, 3)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 3, 6)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 4, 1)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 4, 4)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 5, 2)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 6, 0)
+plot_odd_cell(a,b,c, aperture, 3, "orange", 6, 3)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 7, 1)
+
+plot_odd_cell(a,b,c, aperture, 3, "orange", 9, 0)
         
 ############# Test for Odd Level 3 #############
 level = 3
-plot_even(a, b, c, aperture, level, "orange")
+plot_odd(a, b, c, aperture, level, "orange")
 
 
 ############# Test for Even level #############
 plot_even(a, b, c, aperture, 4, "magenta")
-plot_even(a, b, c, aperture, 2, "blue")
+#plot_even(a, b, c, aperture, 2, "blue")
 
 plt.show()
