@@ -60,10 +60,10 @@ def plot_even(a, b, c, aperture, level, colour, width):
                               ((denom - row - col)/denom))
             plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
                      markersize=width, color=colour)
-            plot_even_cell(a,b,c,denom,colour,row,col)
+            plot_even_cell(a,b,c,denom,colour,width,row,col)
             
 
-def plot_even_cell(a, b, c, denom, colour, i, j):
+def plot_even_cell(a, b, c, denom, colour, width, i, j):
 
     vec_i = [2,1,-1,-2,-1,1]
     vec_j = [-1,1,2,1,-1,-2]
@@ -95,7 +95,7 @@ def plot_even_cell(a, b, c, denom, colour, i, j):
 
     cartesians_x.append(cartesians_x[0])
     cartesians_y.append(cartesians_y[0])
-    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed')
+    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed', markersize=width/2)
 
 
 
@@ -115,10 +115,10 @@ def plot_odd(a, b, c, aperture, level, colour, width):
                                   ((denom - i - j)/denom))
                 plt.plot(cartesian_point[0], cartesian_point[1], marker='o',
                          markersize=width, color=colour)
-                plot_odd_cell(a,b,c,denom,colour,i,j)
+                plot_odd_cell(a,b,c,denom,colour,width,i,j)
 
                 
-def plot_odd_cell(a, b, c, denom, colour, i, j):
+def plot_odd_cell(a, b, c, denom, colour, width, i, j):
 
     vec_i = [1,0,-1,-1,0,1]
     vec_j = [0,1,1,0,-1,-1]
@@ -146,7 +146,7 @@ def plot_odd_cell(a, b, c, denom, colour, i, j):
     cartesians_x.append(cartesians_x[0])
     cartesians_y.append(cartesians_y[0])
 
-    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed')
+    plt.plot(cartesians_x, cartesians_y, color=colour, linestyle='dashed', markersize=width/2)
 
 
 
@@ -197,13 +197,13 @@ aperture = 3
         
 ############# Test for sucessive levels #############
 
-plot_odd(a, b, c, aperture, 3, "yellow", 20)
+plot_odd(a, b, c, aperture, 3, "black", 20)
 
-plot_even(a, b, c, aperture, 4, "cyan", 15)
+plot_even(a, b, c, aperture, 4, "dimgrey", 15)
 
-plot_odd(a, b, c, aperture, 5, "magenta", 10)
+plot_odd(a, b, c, aperture, 5, "darkgrey", 10)
 
-plot_even(a, b, c, aperture, 6, "orange", 5)
+plot_even(a, b, c, aperture, 6, "lightgrey", 5)
 
 
 plt.show()
