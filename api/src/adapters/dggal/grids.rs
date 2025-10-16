@@ -86,11 +86,15 @@ impl DggrsApi for DggalImpl {
         config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
-        let parent_u64 = parent_zone_id.as_u64().ok_or_else(|| {
-            DggrsError::UnsupportedZoneIdFormat(
-                "Expected ZoneId::IntId for parent_zone_id".to_string(),
-            )
-        })?;
+
+        let dggrs = self.get_dggrs()?;
+
+        // Check if ParentZoneId is Int
+        let parent_zone_u64 = match &parent_zone_id {
+            ZoneId::IntId(id) => *id,
+            ZoneId::StrId(s) => dggrs.getZoneFromTextID(s),
+            ZoneId::HexId(h) => dggrs.getZoneFromTextID(&h.to_string()),
+        };
 
         if relative_depth > self.max_relative_depth()? {
             return Err(DggrsError::RelativeDepthLimitReached {
@@ -100,10 +104,8 @@ impl DggrsApi for DggalImpl {
             });
         };
 
-        let dggrs = self.get_dggrs()?;
-
         let target_level =
-            RefinementLevel::new(dggrs.getZoneLevel(parent_u64))?.add(relative_depth)?;
+            RefinementLevel::new(dggrs.getZoneLevel(parent_zone_u64))?.add(relative_depth)?;
 
         if target_level > self.max_refinement_level()? {
             return Err(DggrsError::RefinementLevelPlusRelativeDepthLimitReached {
@@ -113,7 +115,7 @@ impl DggrsApi for DggalImpl {
             });
         };
 
-        let zones = dggrs.getSubZones(parent_u64, i32::from(relative_depth));
+        let zones = dggrs.getSubZones(parent_zone_u64, i32::from(relative_depth));
 
         Ok(to_zones(dggrs, zones, cfg)?)
     }
@@ -123,13 +125,16 @@ impl DggrsApi for DggalImpl {
         config: Option<DggrsApiConfig>,
     ) -> Result<Zones, DggrsError> {
         let cfg = config.unwrap_or_default();
-        let zone_u64 = zone_id.as_u64().ok_or_else(|| {
-            DggrsError::UnsupportedZoneIdFormat(
-                "Expected ZoneId::IntId for parent_zone_id".to_string(),
-            )
-        })?;
 
         let dggrs = self.get_dggrs()?;
+
+        // Check if ZoneId is Int
+        let zone_u64 = match &zone_id {
+            ZoneId::IntId(id) => *id,
+            ZoneId::StrId(s) => dggrs.getZoneFromTextID(s),
+            ZoneId::HexId(h) => dggrs.getZoneFromTextID(&h.to_string()),
+        };
+
         let zones = vec![zone_u64];
 
         Ok(to_zones(dggrs, zones, cfg)?)
