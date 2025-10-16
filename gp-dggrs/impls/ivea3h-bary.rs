@@ -19,6 +19,7 @@ pub struct IVEA3H-Bary {
 
 impl IVEA3H-Bary {
 
+    // Denominator is a power of the aperture, but only increases every other resolution.
     fn compute_denom(refinement_level:RefinementLevel) {
         APERTURE.pow((level+level/2)/2); 
     }
@@ -30,6 +31,13 @@ impl IVEA3H-Bary {
 
     fn bundle_index(i: int32, j:int32, refinement_level:RefinementLevel, face:int32){
         // do something
+    }
+
+    // Computes distance with barycentric coordinates defined by an equilateral triangle.
+    fn bary_distance(i1:float64, j1:float64, i2:float64, j2:float64) {
+        let d1 = i1 - j1;
+        let d2 = i2 - j2;
+        d1.pow(2) + d2.pow(2) + d1 * d2;
     }
 }
 
@@ -44,35 +52,48 @@ impl DggrsApi for IVEA3H-Bary {
 
         let bary = project(Point);
         let denom = compute_denom(refinement_level);
+        let mut zone_centre = [1;1]; // the result
 
-        //x,y - reals between 0 and 1
-        //n,m - unknown, but integers between 0 and denom
-        //i - numerator which over d equates to x 
-        //j - numerator which over d equates to y
-
+        let mut candidates = Vec::new();
+        
         let i_down = (bary[0]*denom).floor();
         let i_up   = (bary[0]*denom).ceil();
-
-        //v - p < 3 (level) p - w < 3 (level)
 
         // Even case
         if (refinement_level % 2) > 0 {
             let j_down = (bary[1]/denom).floor();
             let j_up = (bary[1]/denom).ceil();
+            candidates.push([i_down; j_down]);
+            candidates.push([i_down; j_up]);
+            candidates.push([i_up; j_down]);
+            candidates.push([i_up; j_up]);
         }
         // Odd case
         else {
             let start_down = i_down % aperture; 
             let start_up = i_up % aperture; 
-            let num_hops = (bary[1]*denom/aperture); // integer division
+            let num_hops = bary[1] * denom / aperture; // integer division
             let j_down = start_down + num_hops * aperture;
-            let j_up = start_up + (num_hops+1) * aperture;
+            let j_up = start_up + num_hops * aperture;
+            candidates.push([i_down; j_down]);
+            candidates.push([i_down; j_down + 1]);
+            candidates.push([i_up; j_up]);
+            candidates.push([i_up; j_up + 1]);
         }
 
         // Find closest cell centre
+        let current_dist = i32::MAX
+        while candidates::length() > 0 {
+            centre = candidates.pop();
+            dist = bary_distance(centre[0], bary[0], centre[1], bary[]);
+            if (dist < current_dist) {
+                current_dist = dist;
+                zone_centre = centre;
+            }
+        }
 
         // Bundle coords into index
-        bundle_index(i, j, refinement_level, bary[3])
+        bundle_index(zone_centre[0], zone_centre[1], refinement_level, bary[3]);
     }
 }
 
