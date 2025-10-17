@@ -7,7 +7,8 @@ readme = "README.md"
 rust-version = "1.88"
 
 [dependencies]
-gp-dggrs = {path = "../gp-dggrs/"}
+geo = "0.30.0"
 
-
-
+[[example]]
+name = "ivea3h-bary"
+path = "example/ivea3h-bary.rs"
