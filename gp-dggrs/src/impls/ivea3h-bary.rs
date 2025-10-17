@@ -12,14 +12,14 @@ use crate::error::DggrsError;
 use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::{Point, Rect};
 
-mod ivea3h-bary {
+mod ivea3hbary {
 
-    pub struct IVEA3H-Bary {
+    pub struct IVEA3HBary {
      
         const APERTURE: i32 = 3;
     }
     
-    impl IVEA3H-Bary {
+    impl IVEA3HBary {
     
         // Denominator is a power of the aperture, but only increases every other resolution.
         fn compute_denom(refinement_level:RefinementLevel) {
@@ -95,7 +95,22 @@ mod ivea3h-bary {
             }
     
             // Bundle coords into index
-            bundle_index(zone_centre[0], zone_centre[1], refinement_level, bary[3]);
+            // bundle_index(zone_centre[0], zone_centre[1], refinement_level, bary[3]);
+
+            zone_centre;
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn zone_from_point() {
+    
+         let zone = zone_from_point(3, Point(0.45,0.22));
+         assert_eq!(zone[0], 4);
+         assert_eq!(zone[1], 1);   
+    }
+
 }
