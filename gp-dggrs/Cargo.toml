@@ -8,7 +8,3 @@ rust-version = "1.88"
 
 [dependencies]
 geo = "0.30.0"
-
-[[example]]
-name = "ivea3h-bary"
-path = "example/ivea3h-bary.rs"

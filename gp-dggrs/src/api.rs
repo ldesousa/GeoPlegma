@@ -1,5 +1,18 @@
+use crate::api::error::DggrsError;
+use crate::api::models::common::{RefinementLevel, Zones};
+use geo::Point;
+
 pub trait DggrsSysApi {
 
-pub fn get_children(){}
+    const APERTURE: i32;
+
+    fn zone_from_point(
+        &self,
+        refinement_level: RefinementLevel,
+        point: Point, 
+        //config: Option<DggrsApiConfig>,
+    ) -> Result<Zones, DggrsError> {}
+
+    fn get_children(){}
 
 }

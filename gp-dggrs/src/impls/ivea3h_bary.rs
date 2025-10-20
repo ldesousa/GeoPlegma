@@ -8,27 +8,25 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::error::DggrsError;
-use crate::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
+use gp_dggrs::api::DggrsSysApi;
+use crate::api::error::DggrsError;
+use crate::api::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
 use geo::{Point, Rect};
 
 mod ivea3hbary {
 
-    pub struct IVEA3HBary {
-     
-        const APERTURE: i32 = 3;
-    }
+    pub struct IVEA3HBary {}
     
     impl IVEA3HBary {
     
-        // Denominator is a power of the aperture, but only increases every other resolution.
+        // Denominator is a power of the APERTURE, but only increases every other resolution.
         fn compute_denom(refinement_level:RefinementLevel) {
-            APERTURE.pow((level+level/2)/2); 
+            Self::APERTURE.pow((refinement_level+refinement_level/2)/2); 
         }
     
         // Fake method for the time being - then use the Projection module
-        fn project(Point) {
-            [0.45; 0.22; (1-0.45-0.22)];
+        fn project(point:Point) {
+            [0.45, 0.22, (1-0.45-0.22)];
         }
     
         fn bundle_index(i: int32, j:int32, refinement_level:RefinementLevel, face:int32){
@@ -43,17 +41,19 @@ mod ivea3hbary {
         }
     }
     
-    impl DggrsApi for IVEA3H-Bary {
+    impl DggrsSysApi for IVEA3HBary {
+        
+        const APERTURE: i32 = 3;
         
         fn zone_from_point(
             &self,
             refinement_level: RefinementLevel,
             point: Point, 
-            config: Option<DggrsApiConfig>,
+            //config: Option<DggrsApiConfig>,
         ) -> Result<Zones, DggrsError> {
     
-            let bary = project(Point);
-            let denom = compute_denom(refinement_level);
+            let bary = Self::project(point);
+            let denom = Self::compute_denom(refinement_level);
             let mut zone_centre = [1;1]; // the result
     
             let mut candidates = Vec::new();
@@ -72,11 +72,11 @@ mod ivea3hbary {
             }
             // Odd case
             else {
-                let start_down = i_down % aperture; 
-                let start_up = i_up % aperture; 
-                let num_hops = bary[1] * denom / aperture; // integer division
-                let j_down = start_down + num_hops * aperture;
-                let j_up = start_up + num_hops * aperture;
+                let start_down = i_down % Self::APERTURE; 
+                let start_up = i_up % Self::APERTURE; 
+                let num_hops = bary[1] * denom / Self::APERTURE; // integer division
+                let j_down = start_down + num_hops * Self::APERTURE;
+                let j_up = start_up + num_hops * Self::APERTURE;
                 candidates.push([i_down; j_down]);
                 candidates.push([i_down; j_down + 1]);
                 candidates.push([i_up; j_up]);
@@ -84,11 +84,11 @@ mod ivea3hbary {
             }
     
             // Find closest cell centre
-            let current_dist = i32::MAX
-            while candidates::length() > 0 {
-                centre = candidates.pop();
-                dist = bary_distance(centre[0], bary[0], centre[1], bary[]);
-                if (dist < current_dist) {
+            let current_dist = i32::MAX;
+            while candidates.length() > 0 {
+                let centre = candidates.pop();
+                let dist = Self::bary_distance(centre[0], bary[0], centre[1], bary[1]);
+                if dist < current_dist {
                     current_dist = dist;
                     zone_centre = centre;
                 }
