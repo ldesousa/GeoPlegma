@@ -1,5 +1,5 @@
-use crate::api::error::DggrsError;
-use crate::api::models::common::{RefinementLevel, Zones};
+use api::error::DggrsError;
+use api::models::common::{RefinementLevel, Zones};
 use geo::Point;
 
 pub trait DggrsSysApi {

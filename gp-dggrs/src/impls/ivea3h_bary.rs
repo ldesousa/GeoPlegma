@@ -8,12 +8,12 @@
 // discretion. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use gp_dggrs::api::DggrsSysApi;
-use crate::api::error::DggrsError;
-use crate::api::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
-use geo::{Point, Rect};
-
 mod ivea3hbary {
+
+    use crate::sys_api::DggrsSysApi;
+    use api::error::DggrsError;
+    use api::models::common::{RefinementLevel, RelativeDepth, ZoneId, Zones};
+    use geo::Point;
 
     pub struct IVEA3HBary {}
     
@@ -26,18 +26,18 @@ mod ivea3hbary {
     
         // Fake method for the time being - then use the Projection module
         fn project(point:Point) {
-            [0.45, 0.22, (1-0.45-0.22)];
+            [0.45, 0.22, (1.0-0.45-0.22)];
         }
     
-        fn bundle_index(i: int32, j:int32, refinement_level:RefinementLevel, face:int32){
+        fn bundle_index(i:i32, j:i32, refinement_level:RefinementLevel, face:i32){
             // do something
         }
     
         // Computes distance with barycentric coordinates defined by an equilateral triangle.
-        fn bary_distance(i1:float64, j1:float64, i2:float64, j2:float64) {
+        fn bary_distance(i1:f64, j1:f64, i2:f64, j2:f64) -> f64 {
             let d1 = i1 - j1;
             let d2 = i2 - j2;
-            d1.pow(2) + d2.pow(2) + d1 * d2;
+            return d1.pow(2) + d2.pow(2) + d1 * d2;
         }
     }
     
@@ -52,42 +52,42 @@ mod ivea3hbary {
             //config: Option<DggrsApiConfig>,
         ) -> Result<Zones, DggrsError> {
     
-            let bary = Self::project(point);
-            let denom = Self::compute_denom(refinement_level);
+            let bary = project(point);
+            let denom = compute_denom(refinement_level);
             let mut zone_centre = [1;1]; // the result
     
             let mut candidates = Vec::new();
             
-            let i_down = (bary[0]*denom).floor();
-            let i_up   = (bary[0]*denom).ceil();
+            let i_down = (bary.0 * denom).floor();
+            let i_up   = (bary.0 * denom).ceil();
     
             // Even case
             if (refinement_level % 2) > 0 {
-                let j_down = (bary[1]/denom).floor();
-                let j_up = (bary[1]/denom).ceil();
-                candidates.push([i_down; j_down]);
-                candidates.push([i_down; j_up]);
-                candidates.push([i_up; j_down]);
-                candidates.push([i_up; j_up]);
+                let j_down:i32 = (bary[1]/denom).floor();
+                let j_up:i32 = (bary[1]/denom).ceil();
+                candidates.push([i_down, j_down]);
+                candidates.push([i_down, j_up]);
+                candidates.push([i_up, j_down]);
+                candidates.push([i_up, j_up]);
             }
             // Odd case
             else {
                 let start_down = i_down % Self::APERTURE; 
                 let start_up = i_up % Self::APERTURE; 
                 let num_hops = bary[1] * denom / Self::APERTURE; // integer division
-                let j_down = start_down + num_hops * Self::APERTURE;
-                let j_up = start_up + num_hops * Self::APERTURE;
-                candidates.push([i_down; j_down]);
-                candidates.push([i_down; j_down + 1]);
-                candidates.push([i_up; j_up]);
-                candidates.push([i_up; j_up + 1]);
+                let j_down:i32 = start_down + num_hops * Self::APERTURE;
+                let j_up:i32 = start_up + num_hops * Self::APERTURE;
+                candidates.push([i_down, j_down]);
+                candidates.push([i_down, j_down + 1]);
+                candidates.push([i_up, j_up]);
+                candidates.push([i_up, j_up + 1]);
             }
     
             // Find closest cell centre
-            let current_dist = i32::MAX;
+            let current_dist = f64::MAX;
             while candidates.length() > 0 {
                 let centre = candidates.pop();
-                let dist = Self::bary_distance(centre[0], bary[0], centre[1], bary[1]);
+                let dist = Self::bary_distance(centre[0], bary.0, centre[1], bary.1);
                 if dist < current_dist {
                     current_dist = dist;
                     zone_centre = centre;
