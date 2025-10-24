@@ -107,11 +107,17 @@ mod ivea3h_bary {
 #[cfg(test)]
 mod tests {
 
+    use geo::Point;
+    use api::models::common::RefinementLevel;
+    use crate::sys_api::DggrsSysApi;
+    use crate::impls::ivea3h_bary::ivea3h_bary::IVEA3HBary;
+
     #[test]
     fn test_zone_from_point() {
 
-        let system = IVEA3HBary {};        
-        let zone = system.zone_from_point(3, Point(0.45,0.22));
+        let system = IVEA3HBary {};       
+        let level = RefinementLevel::new(3).unwrap();
+        let zone = system.zone_from_point(level, Point::new(0.45,0.22));
         assert_eq!(zone.0, 4);
         assert_eq!(zone.1, 1);   
     }
