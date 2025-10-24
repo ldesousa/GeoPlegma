@@ -1,17 +1,20 @@
-use api::error::DggrsError;
-use api::models::common::{RefinementLevel, Zones};
+//use api::error::DggrsError;
+use api::models::common::{RefinementLevel};//, Zones};
 use geo::Point;
 
 pub trait DggrsSysApi {
 
-    const APERTURE: i32;
+    const APERTURE: u32;
 
     fn zone_from_point(
         &self,
-        refinement_level: RefinementLevel,
-        point: Point, 
+        _refinement_level: RefinementLevel,
+        _point: Point, 
         //config: Option<DggrsApiConfig>,
-    ) -> Result<Zones, DggrsError> {}
+    ) -> (u32, u32) {
+
+        return (0, 0); 
+    }
 
     fn get_children(){}
 
