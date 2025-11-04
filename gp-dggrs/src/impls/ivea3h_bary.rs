@@ -54,39 +54,40 @@ impl DggrsSysApi for IVEA3HBary {
         let denom = IVEA3HBary::compute_denom(refinement_level);
         let mut zone_centre = (1 as u32, 1 as u32); // the result
 
-        //let mut candidates = Vec<(u32, u32)>::new();
         let mut candidates: Vec<(u32, u32)> = Vec::new();
         
-        let i_down = (bary.0 * denom as f64).floor() as u32;
-        let i_up   = (bary.0 * denom as f64).ceil() as u32;
+        let j_down = (bary.1 * denom as f64).floor() as u32;
+        let j_up   = (bary.1 * denom as f64).ceil() as u32;
 
-        // Even case
+        // Odd case
         if (refinement_level.get() % 2) > 0 {
-            let j_down:u32 = (bary.1 / denom as f64).floor() as u32;
-            let j_up:u32 = (bary.1 / denom as f64).ceil() as u32;
+            let start_down = j_down % Self::APERTURE; 
+            let start_up = j_up % Self::APERTURE; 
+            let num_hops = (bary.0 * denom as f64 / Self::APERTURE as f64).floor() as u32; // integer division
+            let i_down:u32 = start_down + num_hops * Self::APERTURE;
+            let i_up:u32 = start_up + num_hops * Self::APERTURE;
+            candidates.push((i_down, j_down));
+            candidates.push((i_down + Self::APERTURE, j_down));
+            candidates.push((i_up, j_up));
+            candidates.push((i_up + Self::APERTURE, j_up));
+        }
+        // Even case
+        else {
+            let i_down:u32 = (bary.0 / denom as f64).floor() as u32;
+            let i_up:u32 = (bary.0 / denom as f64).ceil() as u32;
             candidates.push((i_down, j_down));
             candidates.push((i_down, j_up));
             candidates.push((i_up, j_down));
             candidates.push((i_up, j_up));
-        }
-        // Odd case
-        else {
-            let start_down = i_down % Self::APERTURE; 
-            let start_up = i_up % Self::APERTURE; 
-            let num_hops = (bary.1 * denom as f64 / Self::APERTURE as f64).floor() as u32; // integer division
-            let j_down:u32 = start_down + num_hops * Self::APERTURE;
-            let j_up:u32 = start_up + num_hops * Self::APERTURE;
-            candidates.push((i_down, j_down));
-            candidates.push((i_down, j_down + 1));
-            candidates.push((i_up, j_up));
-            candidates.push((i_up, j_up + 1));
         }
 
         // Find closest cell centre
         let mut current_dist = f64::MAX;
         while candidates.len() > 0 {
             let centre = candidates.pop().unwrap();
-            let dist = Self::bary_distance(centre.0.into(), bary.0, centre.1.into(), bary.1);
+            let dist = Self::bary_distance(
+                f64::from(centre.0) / f64::from(denom), bary.0, 
+                f64::from(centre.1) / f64::from(denom), bary.1);
             if dist < current_dist {
                 current_dist = dist;
                 zone_centre = centre;
