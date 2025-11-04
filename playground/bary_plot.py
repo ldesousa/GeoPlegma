@@ -1,4 +1,4 @@
-from math import sqrt, pow
+from math import sqrt, pow, dist
 import matplotlib.pyplot as plt
 
 def barycentric_to_cartesian(a, b, c, u, v, w):
@@ -170,6 +170,22 @@ def plot_lines(a, b, c, nlines):
 a = (0, 0)
 b = (100, 0)
 c = (50, sqrt(pow(100,2) - pow(50,2)))
+
+################## Distance tests ##########################
+
+                                          # k   # i   # j
+point = barycentric_to_cartesian(a, b, c, 0.33, 0.45, 0.22)
+print("4.05, 1.98: %s, %s" % (point[0], point[1])) 
+
+node1 = barycentric_to_cartesian(a, b, c, 4./9, 4./9, 1./9)
+print("4, 1: %s, %s" % (node1[0], node1[1])) 
+
+node2 = barycentric_to_cartesian(a, b, c, 2./9, 5./9, 2./9)
+print("5, 2: %s, %s" % (node2[0], node2[1])) 
+
+print("Distance to node1: %s" % dist(point, node1))
+print("Distance to node2: %s" % dist(point, node2))
+
 
 x_values = [a[0], b[0], c[0], a[0]]
 y_values = [a[1], b[1], c[1], a[1]]
