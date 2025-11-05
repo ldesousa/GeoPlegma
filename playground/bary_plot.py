@@ -187,6 +187,30 @@ print("Distance to node1: %s" % dist(point, node1))
 print("Distance to node2: %s" % dist(point, node2))
 
 
+point = barycentric_to_cartesian(a, b, c, 0.15, 0.21, 0.64)
+print("4.05, 1.98: %s, %s" % (point[0], point[1])) 
+
+node1 = barycentric_to_cartesian(a, b, c, 2./9, 2./9, 5./9)
+print("2, 5: %s, %s" % (node1[0], node1[1])) 
+
+node2 = barycentric_to_cartesian(a, b, c, 3./9, 0./9, 6./9)
+print("0, 6: %s, %s" % (node2[0], node2[1])) 
+
+node3 = barycentric_to_cartesian(a, b, c, 0./9, 3./9, 6./9)
+print("3, 6: %s, %s" % (node3[0], node3[1])) 
+
+node4 = barycentric_to_cartesian(a, b, c, 1./9, 1./9, 7./9)
+print("1, 7: %s, %s" % (node4[0], node4[1])) 
+
+print("Distance to node1: %s" % dist(point, node1))
+print("Distance to node2: %s" % dist(point, node2))
+print("Distance to node3: %s" % dist(point, node3))
+print("Distance to node4: %s" % dist(point, node4))
+
+
+
+##################### Plot set up ##########################
+
 x_values = [a[0], b[0], c[0], a[0]]
 y_values = [a[1], b[1], c[1], a[1]]
   
