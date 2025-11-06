@@ -23,10 +23,12 @@ pub fn main() {
     let system = IVEA3HBary {};
     let level = RefinementLevel::new(3).unwrap();
 
+    println!("Point 1 {} {}", p1.x(), p1.y());
     let zone1 = system.zone_from_point(level, p1);
     assert_eq!(zone1.0, 5);
     assert_eq!(zone1.1, 2);   
 
+    println!("Point 2 {} {}", p2.x(), p2.y());
     let zone2 = system.zone_from_point(level, p2);
     assert_eq!(zone2.0, 2);
     assert_eq!(zone2.1, 5);   

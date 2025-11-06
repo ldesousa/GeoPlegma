@@ -23,8 +23,8 @@ impl IVEA3HBary {
     }
 
     // Fake method for the time being - then use the Projection module
-    pub fn project(_point:Point) -> (f64, f64, f64){
-        return (0.45, 0.22, (1.0-0.45-0.22));
+    pub fn project(point:Point) -> (f64, f64, f64){
+        return (point.x(), point.y(), (1.0-point.x()-point.y()));
     }
 
     fn bundle_index(_i:i32, _j:i32, _refinement_level:RefinementLevel, _face:i32){
