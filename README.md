@@ -77,6 +77,9 @@ This library provides an interface to DGGRID (and potentinally other tools) to g
 
 Make sure DGGRID is compiled and available on your system. Remember the path where the `dggrid` executable is, or add `dggrid` to your `$PATH`.
 
+## Building and testing
+> **_NOTE:_**  If you want to build the project and start developing and contributing, go [here](DEVELOPMENT.md).
+
 ## Usage Example
 
 Check out `api/example/basic.rs` for a simple example of how to use the `api` crate of GeoPlegma.
@@ -87,14 +90,20 @@ cargo run --example basic
 
 Instead of printing out the length of `result.zones.len()` you can also print out the struct itself.
 
+To run on watch mode and see living changes:
+
+Install cargo-watch:
+```bash
+cargo install cargo-watch
+```
+Then run (this also clears the screen):
+```bash
+cargo watch -c -x 'run --example basic'
+```
+
 Dependencies
 ------------
 This crate depends on `dggal-rust` from https://github.com/GeoPlegma/dggal-rust.
-
-Testing
--------
-There is a test setup for grids in `tests/grids` which you can run with `cargo test --test` (if you only run `cargo test` it will fail as it would also test the documentation and the code in this `README.md`
-
 
 # Release Workflow for bindings (Step by Step)
 
