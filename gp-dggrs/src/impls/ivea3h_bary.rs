@@ -19,7 +19,10 @@ impl IVEA3HBary {
 
     // Denominator is a power of the APERTURE, but only increases every other resolution.
     fn compute_denom(refinement_level:RefinementLevel) -> u32 {
-        return Self::APERTURE.pow((refinement_level.get() as u32 +refinement_level.get() as u32 / 2) / 2) as u32; 
+        let rem = refinement_level.get() as u32 % 2;
+        let div = (refinement_level.get() as u32 + refinement_level.get() as u32 % 2) / 2;
+        return Self::APERTURE.pow((
+            refinement_level.get() as u32 + refinement_level.get() as u32 % 2) / 2) as u32; 
     }
 
     // Fake method for the time being - then use the Projection module
@@ -73,8 +76,8 @@ impl DggrsSysApi for IVEA3HBary {
         }
         // Even case
         else {
-            let i_down:u32 = (bary.0 / denom as f64).floor() as u32;
-            let i_up:u32 = (bary.0 / denom as f64).ceil() as u32;
+            let i_down:u32 = (bary.0 * denom as f64).floor() as u32;
+            let i_up:u32 = (bary.0 * denom as f64).ceil() as u32;
             candidates.push((i_down, j_down));
             candidates.push((i_down, j_up));
             candidates.push((i_up, j_down));
@@ -112,10 +115,14 @@ mod tests {
     fn test_zone_from_point() {
 
         let system = IVEA3HBary {};       
-        let level = RefinementLevel::new(3).unwrap();
-        let zone = system.zone_from_point(level, Point::new(0.45,0.22));
+        let mut level = RefinementLevel::new(3).unwrap();
+        let mut zone = system.zone_from_point(level, Point::new(0.45,0.22));
         assert_eq!(zone.0, 4);
         assert_eq!(zone.1, 1);   
+        level = RefinementLevel::new(4).unwrap();
+        zone = system.zone_from_point(level, Point::new(0.21,0.64));
+        assert_eq!(zone.0, 2);
+        assert_eq!(zone.1, 6);   
     }
 
 }

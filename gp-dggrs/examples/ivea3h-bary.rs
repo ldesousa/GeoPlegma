@@ -32,4 +32,16 @@ pub fn main() {
     let zone2 = system.zone_from_point(level, p2);
     assert_eq!(zone2.0, 2);
     assert_eq!(zone2.1, 5);   
+    
+    let level = RefinementLevel::new(4).unwrap();
+
+    println!("Point 1 {} {}", p1.x(), p1.y());
+    let zone3 = system.zone_from_point(level, p1);
+    assert_eq!(zone3.0, 4);
+    assert_eq!(zone3.1, 2);   
+
+    println!("Point 2 {} {}", p2.x(), p2.y());
+    let zone4 = system.zone_from_point(level, p2);
+    assert_eq!(zone4.0, 2);
+    assert_eq!(zone4.1, 6);   
 }
